@@ -73,7 +73,11 @@ class GS_ICP_SLAM(SLAMParameters):
         test_points, _, _, _ = self.downsample_and_make_pointcloud(test_depth_img, test_rgb_img)
 
         # Get size of final poses
-        num_final_poses = len(self.trajmanager.gt_poses)
+        if self.camera_parameters[8] == "custom":
+            # ground truth poses do not exist in custom dataset
+            num_final_poses = len(self.trajmanager.poses)
+        else:
+            num_final_poses = len(self.trajmanager.gt_poses)
         
         # Shared objects
         self.shared_cam = SharedCam(FoVx=focal2fov(self.fx, self.W), FoVy=focal2fov(self.fy, self.H),
@@ -145,7 +149,14 @@ class GS_ICP_SLAM(SLAMParameters):
             depth_file = os.listdir(depth_folder)[0]
             rgb_image = cv2.imread(os.path.join(rgb_folder, rgb_file))
             depth_image = np.array(o3d.io.read_image(os.path.join(depth_folder, depth_file))).astype(np.float32)
-        
+        elif self.trajmanager.which_dataset == "custom":
+            rgb_folder = os.path.join(self.dataset_path, 'rgb')
+            depth_folder = os.path.join(self.dataset_path, 'depth')
+            rgb_file = os.listdir(rgb_folder)[0]
+            depth_file = os.listdir(depth_folder)[0]
+            rgb_image = cv2.imread(os.path.join(rgb_folder, rgb_file))
+            depth_image = np.array(o3d.io.read_image(os.path.join(depth_folder, depth_file))).astype(np.float32)
+
         return rgb_image, depth_image
 
     def run_viewer(self, lower_speed=True):
@@ -222,7 +233,11 @@ class GS_ICP_SLAM(SLAMParameters):
             depth_folder = os.path.join(self.dataset_path, "depth")
             image_files = os.listdir(rgb_folder)
             depth_files = os.listdir(depth_folder)
- 
+        elif self.trajmanager.which_dataset == "custom":
+            rgb_folder = os.path.join(self.dataset_path, 'rgb')
+            depth_folder = os.path.join(self.dataset_path, 'depth')
+            image_files = sorted(os.listdir(rgb_folder))
+            depth_files = sorted(os.listdir(depth_folder))
         return image_files, depth_files
 
 if __name__ == "__main__":

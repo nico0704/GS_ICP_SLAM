@@ -52,7 +52,12 @@ class Tracker(SLAMParameters):
         
         # Camera poses
         self.trajmanager = TrajManager(self.camera_parameters[8], self.dataset_path)
-        self.poses = [self.trajmanager.gt_poses[0]]
+        if self.camera_parameters[8] == "custom":
+            # ground truth poses do not exist
+            self.poses = [self.trajmanager.poses[0]]
+        else:
+            self.poses = [self.trajmanager.gt_poses[0]]
+            
         # Keyframes(added to map gaussians)
         self.last_t = time.time()
         self.iteration_images = 0
@@ -272,7 +277,8 @@ class Tracker(SLAMParameters):
         self.end_of_dataset[0] = 1
         
         print(f"System FPS: {1/((time.time()-self.total_start_time)/self.num_images):.2f}")
-        print(f"ATE RMSE: {self.evaluate_ate(self.trajmanager.gt_poses, self.poses)*100.:.2f}")
+        if self.trajmanager.which_dataset != "custom":
+            print(f"ATE RMSE: {self.evaluate_ate(self.trajmanager.gt_poses, self.poses)*100.:.2f}")
 
     
     def get_images(self, images_folder):
@@ -298,6 +304,17 @@ class Tracker(SLAMParameters):
                 rgb_images.append(rgb_image)
                 depth_images.append(depth_image)
             return rgb_images, depth_images
+        elif self.trajmanager.which_dataset == "custom":
+            rgb_folder = os.path.join(self.dataset_path, 'rgb')
+            depth_folder = os.path.join(self.dataset_path, 'depth')
+            rgb_files = sorted(os.listdir(rgb_folder))
+            depth_files = sorted(os.listdir(depth_folder))
+            for rgb_file, depth_file in tqdm(zip(rgb_files, depth_files), total=len(rgb_files)):
+                rgb_image = cv2.imread(os.path.join(rgb_folder, rgb_file))
+                depth_image = np.array(o3d.io.read_image(os.path.join(depth_folder, depth_file)))
+                rgb_images.append(rgb_image)
+                depth_images.append(depth_image)
+        return rgb_images, depth_images
 
     def run_viewer(self, lower_speed=True):
         if network_gui.conn == None:
