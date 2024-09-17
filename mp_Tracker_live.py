@@ -13,6 +13,7 @@ sys.path.append(os.path.dirname(__file__))
 from arguments import SLAMParameters
 from utils.traj_utils import TrajManager
 from gaussian_renderer import render, render_2, network_gui
+from camera import Camera
 
 class Tracker(SLAMParameters):
     def __init__(self, slam):
@@ -91,10 +92,10 @@ class Tracker(SLAMParameters):
         self.demo = slam.demo
         self.is_mapping_process_started = slam.is_mapping_process_started
     
-    def run(self, img_queue):
-        self.tracking(img_queue)
+    def run(self):
+        self.tracking()
     
-    def tracking(self, img_queue):
+    def tracking(self):
         tt = torch.zeros((1,1)).float().cuda()
         
         if self.rerun_viewer:
@@ -106,18 +107,34 @@ class Tracker(SLAMParameters):
         if_mapping_keyframe = False
         
         self.total_start_time = time.time()
-        self.num_images = 0
+        self.num_images = 2000
         ii = 0
-        
-        while True:
-            images = img_queue.get()
-            if images is None:
-                break
-            current_image, depth_image = images
+
+        self.camera = Camera()
+        self.save_results = False
+        self.fps = 30
+
+        os.makedirs("dataset/live_test/rgb", exist_ok=True)
+        os.makedirs("dataset/live_test/depth", exist_ok=True)
+
+        num_images = 0
+        while num_images < self.num_images:
+            print(f"processing images {num_images}...")
+            rgb_image, depth_image = self.camera.get_images()
+            if self.save_results:
+                cv2.imwrite(f"dataset/live_test/rgb/frame{num_images:06d}.jpg", rgb_image)
+                cv2.imwrite(f"dataset/live_test/depth/depth{num_images:06d}.png", depth_image)
+            num_images += 1            
+            time.sleep(1 / self.fps)
+
+            if num_images < 10:
+                continue
+            
+            current_image, depth_image = rgb_image, depth_image
 
             self.iter_shared[0] = ii
             current_image = cv2.cvtColor(current_image, cv2.COLOR_RGB2BGR)
-                
+            
             # Make pointcloud
             points, colors, z_values, trackable_filter = self.downsample_and_make_pointcloud2(depth_image, current_image)
             # GICP
@@ -233,20 +250,20 @@ class Tracker(SLAMParameters):
                 # Tracking keyframe
                 len_corres = len(np.where(distances<self.overlapped_th)[0]) # 5e-4 self.overlapped_th
                 
-                # if  (self.iteration_images >= self.num_images-1 \
-                #     or len_corres/distances.shape[0] < self.keyframe_th):
-                #     if_tracking_keyframe = True
-                #     self.from_last_tracking_keyframe = 0
-                # else:
-                #     if_tracking_keyframe = False
-                #     self.from_last_tracking_keyframe += 1
-                
-                if (len_corres / len(distances) < self.keyframe_th or len_corres == 0):
+                if  (self.iteration_images >= self.num_images-1 \
+                    or len_corres/distances.shape[0] < self.keyframe_th):
                     if_tracking_keyframe = True
                     self.from_last_tracking_keyframe = 0
                 else:
                     if_tracking_keyframe = False
                     self.from_last_tracking_keyframe += 1
+                
+                # if (len_corres / len(distances) < self.keyframe_th or len_corres == 0):
+                #     if_tracking_keyframe = True
+                #     self.from_last_tracking_keyframe = 0
+                # else:
+                #     if_tracking_keyframe = False
+                #     self.from_last_tracking_keyframe += 1
                 
                 # Mapping keyframe
                 if (self.from_last_tracking_keyframe) % self.keyframe_freq == 0:
@@ -325,16 +342,17 @@ class Tracker(SLAMParameters):
                     
                     self.is_mapping_keyframe_shared[0] = 1
             
-            # while 1/((time.time() - self.total_start_time)/(self.iteration_images+1)) > 30.:    #30. float(self.test)
-            #     time.sleep(1e-15)
+            while 1/((time.time() - self.total_start_time)/(self.iteration_images+1)) > 30.:    #30. float(self.test)
+                time.sleep(1e-15)
                 
             self.iteration_images += 1
             ii += 1
-            self.num_images += 1
         
         # Tracking end
         self.end_of_dataset[0] = 1
         print(f"System FPS: {1/((time.time()-self.total_start_time)/self.num_images):.2f}")
+
+        self.camera.stop()
 
 
     def run_viewer(self, lower_speed=True):
