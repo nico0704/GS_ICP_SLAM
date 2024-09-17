@@ -1,7 +1,6 @@
 import os
 import torch
 import torch.multiprocessing as mp
-import torch.multiprocessing
 import sys
 import cv2
 import numpy as np
@@ -18,6 +17,7 @@ from gaussian_renderer import render, network_gui
 from mp_Tracker_live import Tracker
 from mp_Mapper_live import Mapper
 from camera import Camera
+import queue
 
 torch.multiprocessing.set_sharing_strategy('file_system')
 
@@ -55,7 +55,7 @@ class GS_ICP_SLAM(SLAMParameters):
         ### Camera Init
         self.camera = Camera()
         self.camera_parameters = self.camera.get_calib_parameters()
-        self.camera_parameters[8] = "custom"
+        # self.camera_parameters[8] = "custom"
         self.fps = 30
                 
         self.W = int(self.camera_parameters[0])
@@ -130,44 +130,45 @@ class GS_ICP_SLAM(SLAMParameters):
         self.mapper = Mapper(self)
         self.tracker = Tracker(self)
 
-    def tracking(self, img_queue, rank):
-        self.tracker.run(img_queue)
+        self.camera.stop()
+        self.camera = None
+
+    def tracking(self, rank):
+        self.tracker.run()
     
     def mapping(self, rank):
         self.mapper.run()
 
     def run(self):
-        img_queue = mp.Queue()
+        # img_queue = mp.Queue()
         processes = []
         for rank in range(2):
             if rank == 0:
-                p = mp.Process(target=self.tracking, args=(img_queue, rank))
+                p = mp.Process(target=self.tracking, args=(rank, ))
             elif rank == 1:
                 p = mp.Process(target=self.mapping, args=(rank, ))
             p.start()
             processes.append(p)
         
-        num_images = 0
-        while not self.terminate:
-            print(f"processing images {num_images}...")
-            rgb_image, depth_image = self.camera.get_images()
-            if not img_queue.full():
-                img_queue.put((rgb_image, depth_image))
-                if self.save_results:
-                    cv2.imwrite(f"{self.rgb_path}/frame{num_images:06d}.jpg", rgb_image)
-                    cv2.imwrite(f"{self.depth_path}/depth{num_images:06d}.png", depth_image)
-                num_images += 1            
-            time.sleep(1 / self.fps)
+        # num_images = 0
+        # while not self.terminate:
+        #     print(f"processing images {num_images}...")
+        #     rgb_image, depth_image = self.camera.get_images()
+        #     if not img_queue.full():
+        #         img_queue.put((rgb_image, depth_image))
+        #         if self.save_results:
+        #             cv2.imwrite(f"{self.rgb_path}/frame{num_images:06d}.jpg", rgb_image)
+        #             cv2.imwrite(f"{self.depth_path}/depth{num_images:06d}.png", depth_image)
+        #         num_images += 1            
+        #     time.sleep(1 / self.fps)
             
-            if num_images == 100:
-                self.terminate = True
+        #     if num_images == 100:
+        #         self.terminate = True
         
-        img_queue.put(None)
+        # img_queue.put(None)
         for p in processes:
             p.join()
         
-        self.camera.stop()
-
     def run_viewer(self, lower_speed=True):
         if network_gui.conn == None:
             network_gui.try_connect()
