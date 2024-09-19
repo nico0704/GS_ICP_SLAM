@@ -46,7 +46,7 @@
         - [line 275](mp_Mapper.py#L275): hierbei wurde die Funktion "calc_2d_metric" für das custom-Dataset ausgeschlossen [TODO: warum?]
         - [line 340](mp_Mapper.py#L340): auch hier werden die Bildordner eingelesen, daher auch hier Funktion "get_image_dirs" für custom-Datensatz angepasst 
     3. mp_Tracker.py
-         - [line 57](mp_Mapper.py#L57): auch hier wird eigene "Startpose" gesetzt, da für eigenen Datensatz keine ground-truth-Posen vorhanden
+         - [line 57](mp_Tracker.py#L57): auch hier wird eigene "Startpose" gesetzt, da für eigenen Datensatz keine ground-truth-Posen vorhanden
         - [line 335 & 340](mp_Tracker.py#L335): da im eigenen Datensatz keine Daten zur Evaluation vorhanden sind, werden hier die Evaluationsansätze für den custom-Datensatz ausgeschlossen
         - [line 367](mp_Mapper.py#L367): auch hier werden die Bilder eingelesen, daher auch hier Funktion "get_images" für custom-Datensatz angepasst 
     4. traj_utils.py
