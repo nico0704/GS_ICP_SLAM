@@ -24,7 +24,7 @@ fx = intrinsics.fx
 fy = intrinsics.fy
 cx = intrinsics.ppx
 cy = intrinsics.ppy
-depth_trunc = 8.0
+depth_trunc = 3.0
 depth_scale = 65.365
 print(f"Width: {W}, Height: {H}, fx: {fx}, fy: {fy}, cx: {cx}, cy: {cy}, Depth Scale: {depth_scale}, Depth Trunc: {depth_trunc}")
 
