@@ -2,9 +2,8 @@ import os
 import torch
 import torch.multiprocessing as mp
 import sys
-import cv2
+from datetime import datetime
 import numpy as np
-import open3d as o3d
 import time
 import rerun as rr
 sys.path.append(os.path.dirname(__file__))
@@ -17,10 +16,8 @@ from gaussian_renderer import render, network_gui
 from mp_Tracker_live import Tracker
 from mp_Mapper_live import Mapper
 from camera import Camera
-import queue
 
 torch.multiprocessing.set_sharing_strategy('file_system')
-
 
 class Pipe():
     def __init__(self, convert_SHs_python, compute_cov3D_python, debug):
@@ -32,7 +29,6 @@ class GS_ICP_SLAM(SLAMParameters):
     def __init__(self, args):
         super().__init__()
         self.dataset_path = args.dataset_path
-        self.config = args.config
         self.output_path = args.output_path
         os.makedirs(self.output_path, exist_ok=True)
         self.verbose = args.verbose
@@ -46,18 +42,21 @@ class GS_ICP_SLAM(SLAMParameters):
         self.test = args.test
         self.save_results = args.save_results
         self.rerun_viewer = args.rerun_viewer
-        self.terminate = False
+        
+        # live cam params
+        self.save_images = args.save_images
+        self.save_dir = args.save_dir
+        self.stop_after = args.stop_after
+        self.fps = float(args.fps)
         
         if self.rerun_viewer:
             rr.init("3dgsviewer")
             rr.spawn(connect=False)
-            
-        ### Camera Init
+        
+        # test camera
+        print("Initializing test camera.")
         self.camera = Camera()
         self.camera_parameters = self.camera.get_calib_parameters()
-        # self.camera_parameters[8] = "custom"
-        self.fps = 30
-                
         self.W = int(self.camera_parameters[0])
         self.H = int(self.camera_parameters[1])
         self.fx = float(self.camera_parameters[2])
@@ -73,9 +72,6 @@ class GS_ICP_SLAM(SLAMParameters):
         except RuntimeError:
             pass
         
-        if self.camera_parameters[8] != "custom":
-            print("dataset_type must be 'custom' in config in order for live camera to work.")
-            sys.exit()
         self.trajmanager = TrajManager(self.camera_parameters[8], self.dataset_path)
         
         # prepare directories to store images
@@ -86,11 +82,13 @@ class GS_ICP_SLAM(SLAMParameters):
             os.makedirs(self.rgb_path, exist_ok=True)
             os.makedirs(self.depth_path, exist_ok=True)
         
-        # Make test cam
-        # To get memory sizes of shared_cam
+        print("Taking test images.")
         test_rgb_img, test_depth_img = self.camera.get_images()
-        # TODO check if images are valid          
         test_points, _, _, _ = self.downsample_and_make_pointcloud(test_depth_img, test_rgb_img)
+        
+        print("Stoping test camera.")
+        self.camera.stop()
+        self.camera = None
 
         # Get size of final poses
         num_final_poses = len(self.trajmanager.poses)
@@ -130,9 +128,6 @@ class GS_ICP_SLAM(SLAMParameters):
         self.mapper = Mapper(self)
         self.tracker = Tracker(self)
 
-        self.camera.stop()
-        self.camera = None
-
     def tracking(self, rank):
         self.tracker.run()
     
@@ -140,7 +135,6 @@ class GS_ICP_SLAM(SLAMParameters):
         self.mapper.run()
 
     def run(self):
-        # img_queue = mp.Queue()
         processes = []
         for rank in range(2):
             if rank == 0:
@@ -149,23 +143,6 @@ class GS_ICP_SLAM(SLAMParameters):
                 p = mp.Process(target=self.mapping, args=(rank, ))
             p.start()
             processes.append(p)
-        
-        # num_images = 0
-        # while not self.terminate:
-        #     print(f"processing images {num_images}...")
-        #     rgb_image, depth_image = self.camera.get_images()
-        #     if not img_queue.full():
-        #         img_queue.put((rgb_image, depth_image))
-        #         if self.save_results:
-        #             cv2.imwrite(f"{self.rgb_path}/frame{num_images:06d}.jpg", rgb_image)
-        #             cv2.imwrite(f"{self.depth_path}/depth{num_images:06d}.png", depth_image)
-        #         num_images += 1            
-        #     time.sleep(1 / self.fps)
-            
-        #     if num_images == 100:
-        #         self.terminate = True
-        
-        # img_queue.put(None)
         for p in processes:
             p.join()
         
@@ -233,8 +210,8 @@ class GS_ICP_SLAM(SLAMParameters):
 
 
 if __name__ == "__main__":
-    parser = ArgumentParser(description="dataset_path / output_path / verbose")
-    parser.add_argument("--dataset_path", help="dataset path", default="dataset/Replica/room0")
+    parser = ArgumentParser()
+    parser.add_argument("--dataset_path", help="dataset path to store the images", default=None)
     parser.add_argument("--config", help="caminfo", default="configs/Replica/caminfo.txt")
     parser.add_argument("--output_path", help="output path", default="output/room0")
     parser.add_argument("--keyframe_th", default=0.7)
@@ -249,6 +226,11 @@ if __name__ == "__main__":
     parser.add_argument("--test", default=None)
     parser.add_argument("--save_results", action='store_true', default=None)
     parser.add_argument("--rerun_viewer", action="store_true", default=False)
+    parser.add_argument("--save_images", action='store_true', default=None)
+    parser.add_argument("--save_dir", help="directory to save the taken images", default="dataset/custom_{}".format(datetime.now().strftime("%d%m%Y_%H_%M")))
+    parser.add_argument("--stop_after", default=200)
+    parser.add_argument("--fps", default=30)
+    
     args = parser.parse_args()
 
     gs_icp_slam = GS_ICP_SLAM(args)
