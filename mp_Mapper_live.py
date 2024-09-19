@@ -2,38 +2,41 @@ import os
 import torch
 import torch.multiprocessing as mp
 import torch.multiprocessing
-import copy
-import random
 import sys
+import cv2
 import numpy as np
+import pygicp
 import time
+from scipy.spatial.transform import Rotation
 import rerun as rr
 sys.path.append(os.path.dirname(__file__))
 from arguments import SLAMParameters
 from utils.traj_utils import TrajManager
-from utils.loss_utils import l1_loss, ssim
-from scene import GaussianModel
-from gaussian_renderer import render, render_3, network_gui
+from gaussian_renderer import render, render_2, network_gui
+from camera import Camera
 
-class Pipe():
-    def __init__(self, convert_SHs_python, compute_cov3D_python, debug):
-        self.convert_SHs_python = convert_SHs_python
-        self.compute_cov3D_python = compute_cov3D_python
-        self.debug = debug
-        
-class Mapper(SLAMParameters):
-    def __init__(self, slam):   
+class Tracker(SLAMParameters):
+    def __init__(self, slam):
         super().__init__()
         self.dataset_path = slam.dataset_path
         self.output_path = slam.output_path
         os.makedirs(self.output_path, exist_ok=True)
         self.verbose = slam.verbose
-        self.keyframe_th = float(slam.keyframe_th)
-        self.trackable_opacity_th = slam.trackable_opacity_th
-        self.save_results = slam.save_results
+        self.keyframe_th = slam.keyframe_th
+        self.knn_max_distance = slam.knn_max_distance
+        self.overlapped_th = slam.overlapped_th
+        self.overlapped_th2 = slam.overlapped_th2
+        self.downsample_rate = slam.downsample_rate
+        self.test = slam.test
         self.rerun_viewer = slam.rerun_viewer
         self.iter_shared = slam.iter_shared
-
+        
+        # live cam params
+        self.max_images = slam.stop_after
+        self.save_images = slam.save_images
+        self.save_dir = slam.save_dir
+        self.fps = slam.fps
+        
         self.camera_parameters = slam.camera_parameters
         self.W = slam.W
         self.H = slam.H
@@ -47,23 +50,22 @@ class Mapper(SLAMParameters):
                                        [0., self.fy, self.cy],
                                        [0.,0.,1]])
         
-        self.downsample_rate = slam.downsample_rate
         self.viewer_fps = slam.viewer_fps
         self.keyframe_freq = slam.keyframe_freq
+        self.max_correspondence_distance = slam.max_correspondence_distance
+        self.reg = pygicp.FastGICP()
         
         # Camera poses
         self.trajmanager = TrajManager(self.camera_parameters[8], self.dataset_path)
         self.poses = [self.trajmanager.poses[0]]
         
         # Keyframes(added to map gaussians)
-        self.keyframe_idxs = []
         self.last_t = time.time()
         self.iteration_images = 0
         self.end_trigger = False
         self.covisible_keyframes = []
         self.new_target_trigger = False
-        self.start_trigger = False
-        self.if_mapping_keyframe = False
+        
         self.cam_t = []
         self.cam_R = []
         self.points_cat = []
@@ -74,23 +76,15 @@ class Mapper(SLAMParameters):
         self.from_last_tracking_keyframe = 0
         self.from_last_mapping_keyframe = 0
         self.scene_extent = 2.5
-        if self.trajmanager.which_dataset == "replica":
-            self.prune_th = 2.5
-        else:
-            self.prune_th = 10.0
         
         self.downsample_idxs, self.x_pre, self.y_pre = self.set_downsample_filter(self.downsample_rate)
 
-        self.gaussians = GaussianModel(self.sh_degree)
-        self.pipe = Pipe(self.convert_SHs_python, self.compute_cov3D_python, self.debug)
-        self.bg_color = [1, 1, 1] if self.white_background else [0, 0, 0]
-        self.background = torch.tensor(self.bg_color, dtype=torch.float32, device="cuda")
+        # Share
         self.train_iter = 0
-        self.mapping_cams = []
         self.mapping_losses = []
         self.new_keyframes = []
         self.gaussian_keyframe_idxs = []
-        
+
         self.shared_cam = slam.shared_cam
         self.shared_new_points = slam.shared_new_points
         self.shared_new_gaussians = slam.shared_new_gaussians
@@ -99,173 +93,264 @@ class Mapper(SLAMParameters):
         self.is_tracking_keyframe_shared = slam.is_tracking_keyframe_shared
         self.is_mapping_keyframe_shared = slam.is_mapping_keyframe_shared
         self.target_gaussians_ready = slam.target_gaussians_ready
+        self.new_points_ready = slam.new_points_ready
         self.final_pose = slam.final_pose
         self.demo = slam.demo
         self.is_mapping_process_started = slam.is_mapping_process_started
     
     def run(self):
-        self.mapping()
+        self.tracking()
     
-    def mapping(self):
-        t = torch.zeros((1,1)).float().cuda()
-        if self.verbose:
-            network_gui.init("127.0.0.1", 6009)
+    def tracking(self):
+        tt = torch.zeros((1,1)).float().cuda()
         
         if self.rerun_viewer:
             rr.init("3dgsviewer")
             rr.connect()
-        
-        # Mapping Process is ready to receive first frame
-        self.is_mapping_process_started[0] = 1
-        
-        # Wait for initial gaussians
-        while not self.is_tracking_keyframe_shared[0]:
-            time.sleep(1e-15)
             
-        self.total_start_time_viewer = time.time()
+        self.reg.set_max_correspondence_distance(self.max_correspondence_distance)
+        self.reg.set_max_knn_distance(self.knn_max_distance)
+        if_mapping_keyframe = False
         
-        points, colors, rots, scales, z_values, trackable_filter = self.shared_new_gaussians.get_values()
-        self.gaussians.create_from_pcd2_tensor(points, colors, rots, scales, z_values, trackable_filter)
-        self.gaussians.spatial_lr_scale = self.scene_extent
-        self.gaussians.training_setup(self)
-        self.gaussians.update_learning_rate(1)
-        self.gaussians.active_sh_degree = self.gaussians.max_sh_degree
-        self.is_tracking_keyframe_shared[0] = 0
+        print("Initializing main camera.")
+        self.camera = Camera(stop_after=self.max_images, save_images=self.save_images, save_dir=self.save_dir)
         
-        if self.demo[0]:
-            a = time.time()
-            while (time.time()-a)<30.:
-                print(30.-(time.time()-a))
-                self.run_viewer()
-        self.demo[0] = 0
-        
-        newcam = copy.deepcopy(self.shared_cam)
-        newcam.on_cuda()
+        self.total_start_time = time.time()
+        ii = 0
 
-        self.mapping_cams.append(newcam)
-        self.keyframe_idxs.append(newcam.cam_idx[0])
-        self.new_keyframes.append(len(self.mapping_cams)-1)
-
-        new_keyframe = False
-        while True:
-            if self.end_of_dataset[0]:
-                break
-
-            if self.verbose:
-                self.run_viewer()       
+        imgs_taken = 0
+        while imgs_taken < self.max_images:
+            rgb_image, depth_image = self.camera.get_images()
+            imgs_taken += 1
+            if imgs_taken < 10:
+                continue           
+            time.sleep(1/self.fps)
             
-            if self.is_tracking_keyframe_shared[0]:
-                # get shared gaussians
-                points, colors, rots, scales, z_values, trackable_filter = self.shared_new_gaussians.get_values()
-                
-                # Add new gaussians to map gaussians
-                self.gaussians.add_from_pcd2_tensor(points, colors, rots, scales, z_values, trackable_filter)
+            current_image, depth_image = rgb_image, depth_image
 
-                # Allocate new target points to shared memory
-                target_points, target_rots, target_scales  = self.gaussians.get_trackable_gaussians_tensor(self.trackable_opacity_th)
-                self.shared_target_gaussians.input_values(target_points, target_rots, target_scales)
-                self.target_gaussians_ready[0] = 1
-
-                # Add new keyframe
-                newcam = copy.deepcopy(self.shared_cam)
-                newcam.on_cuda()
+            self.iter_shared[0] = ii
+            current_image = cv2.cvtColor(current_image, cv2.COLOR_RGB2BGR)
             
-                self.mapping_cams.append(newcam)
-                self.keyframe_idxs.append(newcam.cam_idx[0])
-                self.new_keyframes.append(len(self.mapping_cams)-1)
-                self.is_tracking_keyframe_shared[0] = 0
+            # Make pointcloud
+            points, colors, z_values, trackable_filter = self.downsample_and_make_pointcloud2(depth_image, current_image)
+            # GICP
+            if self.iteration_images == 0:
+                current_pose = self.poses[-1]
+                
+                if self.rerun_viewer:
+                    # rr.set_time_sequence("step", self.iteration_images)
+                    rr.set_time_seconds("log_time", time.time() - self.total_start_time)
+                    rr.log(
+                        "cam/current",
+                        rr.Transform3D(translation=self.poses[-1][:3,3],
+                                    rotation=rr.Quaternion(xyzw=(Rotation.from_matrix(self.poses[-1][:3,:3])).as_quat()))
+                    )
+                    rr.log(
+                        "cam/current",
+                        rr.Pinhole(
+                            resolution=[self.W, self.H],
+                            image_from_camera=self.cam_intrinsic,
+                            camera_xyz=rr.ViewCoordinates.RDF,
+                        )
+                    )
+                    rr.log(
+                        "cam/current",
+                        rr.Image(current_image)
+                    )
+                    
+                # Update Camera pose #
+                current_pose = np.linalg.inv(current_pose)
+                T = current_pose[:3,3]
+                R = current_pose[:3,:3].transpose()
+                
+                # transform current points
+                points = np.matmul(R, points.transpose()).transpose() - np.matmul(R, T)
+                # Set initial pointcloud to target points
+                self.reg.set_input_target(points)
+                
+                num_trackable_points = trackable_filter.shape[0]
+                input_filter = np.zeros(points.shape[0], dtype=np.int32)
+                input_filter[(trackable_filter)] = [range(1, num_trackable_points+1)]
+                
+                self.reg.set_target_filter(num_trackable_points, input_filter)
+                self.reg.calculate_target_covariance_with_filter()
 
-            elif self.is_mapping_keyframe_shared[0]:
-                # get shared gaussians
-                points, colors, rots, scales, z_values, _ = self.shared_new_gaussians.get_values()
+                rots = self.reg.get_target_rotationsq()
+                scales = self.reg.get_target_scales()
+                rots = np.reshape(rots, (-1,4))
+                scales = np.reshape(scales, (-1,3))
                 
-                # Add new gaussians to map gaussians
-                self.gaussians.add_from_pcd2_tensor(points, colors, rots, scales, z_values, [])
+                # Assign first gaussian to shared memory
+                self.shared_new_gaussians.input_values(torch.tensor(points), torch.tensor(colors), 
+                                                       torch.tensor(rots), torch.tensor(scales), 
+                                                       torch.tensor(z_values), torch.tensor(trackable_filter))
                 
-                # Add new keyframe
-                newcam = copy.deepcopy(self.shared_cam)
-                newcam.on_cuda()
-                self.mapping_cams.append(newcam)
-                self.keyframe_idxs.append(newcam.cam_idx[0])
-                self.new_keyframes.append(len(self.mapping_cams)-1)
-                self.is_mapping_keyframe_shared[0] = 0
-        
-            if len(self.mapping_cams)>0:
+                # Add first keyframe
+                depth_image = depth_image.astype(np.float32)/self.depth_scale
+                self.shared_cam.setup_cam(R, T, current_image, depth_image)
+                self.shared_cam.cam_idx[0] = self.iteration_images
                 
-                # train once on new keyframe, and random
-                if len(self.new_keyframes) > 0:
-                    train_idx = self.new_keyframes.pop(0)
-                    viewpoint_cam = self.mapping_cams[train_idx]
-                    new_keyframe = True
+                self.is_tracking_keyframe_shared[0] = 1
+                
+                while self.demo[0]:
+                    time.sleep(1e-15)
+                    self.total_start_time = time.time()
+                if self.rerun_viewer:
+                    # rr.set_time_sequence("step", self.iteration_images)
+                    rr.set_time_seconds("log_time", time.time() - self.total_start_time)
+                    rr.log(f"pt/trackable/{self.iteration_images}", rr.Points3D(points, colors=colors, radii=0.02))
+            else:
+                self.reg.set_input_source(points)
+                num_trackable_points = trackable_filter.shape[0]
+                input_filter = np.zeros(points.shape[0], dtype=np.int32)
+                input_filter[(trackable_filter)] = [range(1, num_trackable_points+1)]
+                self.reg.set_source_filter(num_trackable_points, input_filter)
+                
+                initial_pose = self.poses[-1]
+
+                current_pose = self.reg.align(initial_pose)
+                self.poses.append(current_pose)
+
+                if self.rerun_viewer:
+                    # rr.set_time_sequence("step", self.iteration_images)
+                    rr.set_time_seconds("log_time", time.time() - self.total_start_time)
+                    rr.log(
+                        "cam/current",
+                        rr.Transform3D(translation=self.poses[-1][:3,3],
+                                    rotation=rr.Quaternion(xyzw=(Rotation.from_matrix(self.poses[-1][:3,:3])).as_quat()))
+                    )
+                    rr.log(
+                        "cam/current",
+                        rr.Pinhole(
+                            resolution=[self.W, self.H],
+                            image_from_camera=self.cam_intrinsic,
+                            camera_xyz=rr.ViewCoordinates.RDF,
+                        )
+                    )
+                    rr.log(
+                        "cam/current",
+                        rr.Image(current_image)
+                    )
+
+                # Update Camera pose #
+                current_pose = np.linalg.inv(current_pose)
+                T = current_pose[:3,3]
+                R = current_pose[:3,:3].transpose()
+
+                # transform current points
+                points = np.matmul(R, points.transpose()).transpose() - np.matmul(R, T)
+                # Use only trackable points when tracking
+                target_corres, distances = self.reg.get_source_correspondence() # get associated points source points
+                
+                # Keyframe selection #
+                # Tracking keyframe
+                len_corres = len(np.where(distances<self.overlapped_th)[0]) # 5e-4 self.overlapped_th
+                
+                if  (self.iteration_images >= self.max_images-1 \
+                    or len_corres/distances.shape[0] < self.keyframe_th):
+                    if_tracking_keyframe = True
+                    self.from_last_tracking_keyframe = 0
                 else:
-                    train_idx = random.choice(range(len(self.mapping_cams)))
-                    viewpoint_cam = self.mapping_cams[train_idx]
+                    if_tracking_keyframe = False
+                    self.from_last_tracking_keyframe += 1
                 
-                if self.training_stage==0:
-                    gt_image = viewpoint_cam.original_image.cuda()
-                    gt_depth_image = viewpoint_cam.original_depth_image.cuda()
-                elif self.training_stage==1:
-                    gt_image = viewpoint_cam.rgb_level_1.cuda()
-                    gt_depth_image = viewpoint_cam.depth_level_1.cuda()
-                elif self.training_stage==2:
-                    gt_image = viewpoint_cam.rgb_level_2.cuda()
-                    gt_depth_image = viewpoint_cam.depth_level_2.cuda()
+                # if (len_corres / len(distances) < self.keyframe_th or len_corres == 0):
+                #     if_tracking_keyframe = True
+                #     self.from_last_tracking_keyframe = 0
+                # else:
+                #     if_tracking_keyframe = False
+                #     self.from_last_tracking_keyframe += 1
                 
-                self.training=True
-                render_pkg = render_3(viewpoint_cam, self.gaussians, self.pipe, self.background, training_stage=self.training_stage)
+                # Mapping keyframe
+                if (self.from_last_tracking_keyframe) % self.keyframe_freq == 0:
+                    if_mapping_keyframe = True
+                else:
+                    if_mapping_keyframe = False
                 
-                depth_image = render_pkg["render_depth"]
-                image = render_pkg["render"]
-                viewspace_point_tensor, visibility_filter, radii = render_pkg["viewspace_points"], render_pkg["visibility_filter"], render_pkg["radii"]
-                
-                mask = (gt_depth_image>0.)
-                mask = mask.detach()
-                # color_mask = torch.tile(mask, (3,1,1))
-                gt_image = gt_image * mask
-                
-                # Loss
-                Ll1_map, Ll1 = l1_loss(image, gt_image)
-                L_ssim_map, L_ssim = ssim(image, gt_image)
-
-                d_max = 10.
-                Ll1_d_map, Ll1_d = l1_loss(depth_image/d_max, gt_depth_image/d_max)
-
-                loss_rgb = (1.0 - self.lambda_dssim) * Ll1 + self.lambda_dssim * (1.0 - L_ssim)
-                loss_d = Ll1_d
-                
-                loss = loss_rgb + 0.1*loss_d
-                
-                loss.backward()
-                with torch.no_grad():
-                    if self.train_iter % 200 == 0:  # 200
-                        self.gaussians.prune_large_and_transparent(0.005, self.prune_th)
+                if if_tracking_keyframe:
                     
-                    self.gaussians.optimizer.step()
-                    self.gaussians.optimizer.zero_grad(set_to_none = True)
+                    while self.is_tracking_keyframe_shared[0] or self.is_mapping_keyframe_shared[0]:
+                        time.sleep(1e-15)
                     
-                    if new_keyframe and self.rerun_viewer:
-                        current_i = copy.deepcopy(self.iter_shared[0])
-                        rgb_np = image.cpu().numpy().transpose(1,2,0)
-                        rgb_np = np.clip(rgb_np, 0., 1.0) * 255
-                        # rr.set_time_sequence("step", current_i)
-                        rr.set_time_seconds("log_time", time.time() - self.total_start_time_viewer)
-                        rr.log("rendered_rgb", rr.Image(rgb_np))
-                        new_keyframe = False
-                        
-                self.training = False
-                self.train_iter += 1
-                # torch.cuda.empty_cache()
-        if self.verbose:
-            while True:
-                self.run_viewer(False)
+                    rots = np.array(self.reg.get_source_rotationsq())
+                    rots = np.reshape(rots, (-1,4))
+
+                    R_d = Rotation.from_matrix(R)    # from camera R
+                    R_d_q = R_d.as_quat()            # xyzw
+                    rots = self.quaternion_multiply(R_d_q, rots)
+                    
+                    scales = np.array(self.reg.get_source_scales())
+                    scales = np.reshape(scales, (-1,3))
+                    
+                    # Erase overlapped points from current pointcloud before adding to map gaussian #
+                    # Using filter
+                    not_overlapped_indices_of_trackable_points = self.eliminate_overlapped2(distances, self.overlapped_th2) # 5e-5 self.overlapped_th
+                    trackable_filter = trackable_filter[not_overlapped_indices_of_trackable_points]
+                    
+                    # Add new gaussians
+                    self.shared_new_gaussians.input_values(torch.tensor(points), torch.tensor(colors), 
+                                                       torch.tensor(rots), torch.tensor(scales), 
+                                                       torch.tensor(z_values), torch.tensor(trackable_filter))
+
+                    # Add new keyframe
+                    depth_image = depth_image.astype(np.float32)/self.depth_scale
+                    self.shared_cam.setup_cam(R, T, current_image, depth_image)
+                    self.shared_cam.cam_idx[0] = self.iteration_images
+                    
+                    self.is_tracking_keyframe_shared[0] = 1
+                    
+                    # Get new target point
+                    while not self.target_gaussians_ready[0]:
+                        time.sleep(1e-15)
+                    target_points, target_rots, target_scales = self.shared_target_gaussians.get_values_np()
+                    self.reg.set_input_target(target_points)
+                    self.reg.set_target_covariances_fromqs(target_rots.flatten(), target_scales.flatten())
+                    self.target_gaussians_ready[0] = 0
+                    
+                    if self.rerun_viewer:
+                        # rr.set_time_sequence("step", self.iteration_images)
+                        rr.set_time_seconds("log_time", time.time() - self.total_start_time)
+                        rr.log(f"pt/trackable/{self.iteration_images}", rr.Points3D(points, colors=colors, radii=0.01))
+
+                elif if_mapping_keyframe:
+                    
+                    while self.is_tracking_keyframe_shared[0] or self.is_mapping_keyframe_shared[0]:
+                        time.sleep(1e-15)
+                    
+                    rots = np.array(self.reg.get_source_rotationsq())
+                    rots = np.reshape(rots, (-1,4))
+
+                    R_d = Rotation.from_matrix(R)    # from camera R
+                    R_d_q = R_d.as_quat()            # xyzw
+                    rots = self.quaternion_multiply(R_d_q, rots)
+                                        
+                    scales = np.array(self.reg.get_source_scales())
+                    scales = np.reshape(scales, (-1,3))
+
+                    self.shared_new_gaussians.input_values(torch.tensor(points), torch.tensor(colors), 
+                                                       torch.tensor(rots), torch.tensor(scales), 
+                                                       torch.tensor(z_values), torch.tensor(trackable_filter))
+                    
+                    # Add new keyframe
+                    depth_image = depth_image.astype(np.float32)/self.depth_scale
+                    self.shared_cam.setup_cam(R, T, current_image, depth_image)
+                    self.shared_cam.cam_idx[0] = self.iteration_images
+                    
+                    self.is_mapping_keyframe_shared[0] = 1
+            
+            while 1/((time.time() - self.total_start_time)/(self.iteration_images+1)) > 30.:    #30. float(self.test)
+                time.sleep(1e-15)
+                
+            self.iteration_images += 1
+            ii += 1
         
-        # End of data
-        if self.save_results and not self.rerun_viewer:
-            self.gaussians.save_ply(os.path.join(self.output_path, "scene.ply"))
-        
-        if self.trajmanager.which_dataset != "custom":
-            self.calc_2d_metric()
-    
+        # Tracking end
+        self.end_of_dataset[0] = 1
+        print(f"System FPS: {1/((time.time()-self.total_start_time)/imgs_taken):.2f}")
+
+        self.camera.stop()
+
+
     def run_viewer(self, lower_speed=True):
         if network_gui.conn == None:
             network_gui.try_connect()
@@ -290,6 +375,15 @@ class Mapper(SLAMParameters):
             except Exception as e:
                 network_gui.conn = None
 
+    def quaternion_multiply(self, q1, Q2):
+        # q1*Q2
+        x0, y0, z0, w0 = q1
+        
+        return np.array([w0*Q2[:,0] + x0*Q2[:,3] + y0*Q2[:,2] - z0*Q2[:,1],
+                        w0*Q2[:,1] + y0*Q2[:,3] + z0*Q2[:,0] - x0*Q2[:,2],
+                        w0*Q2[:,2] + z0*Q2[:,3] + x0*Q2[:,1] - y0*Q2[:,0],
+                        w0*Q2[:,3] - x0*Q2[:,0] - y0*Q2[:,1] - z0*Q2[:,2]]).T
+
     def set_downsample_filter( self, downsample_scale):
         # Get sampling idxs
         sample_interval = downsample_scale
@@ -310,3 +404,53 @@ class Mapper(SLAMParameters):
         y_pre = (v-self.cy)/self.fy # * z_values
         
         return pick_idxs, x_pre, y_pre
+
+    def downsample_and_make_pointcloud2(self, depth_img, rgb_img):
+        
+        colors = torch.from_numpy(rgb_img).reshape(-1,3).float()[self.downsample_idxs]/255
+        z_values = torch.from_numpy(depth_img.astype(np.float32)).flatten()[self.downsample_idxs]/self.depth_scale
+        zero_filter = torch.where(z_values!=0)
+        filter = torch.where(z_values[zero_filter]<=self.depth_trunc)
+        # print(z_values[filter].min())
+        # Trackable gaussians (will be used in tracking)
+        z_values = z_values[zero_filter]
+        x = self.x_pre[zero_filter] * z_values
+        y = self.y_pre[zero_filter] * z_values
+        points = torch.stack([x,y,z_values], dim=-1)
+        colors = colors[zero_filter]
+        
+        # untrackable gaussians (won't be used in tracking, but will be used in 3DGS)
+        
+        return points.numpy(), colors.numpy(), z_values.numpy(), filter[0].numpy()
+    
+    def eliminate_overlapped2(self, distances, threshold):
+        
+        # plt.hist(distances, bins=np.arange(0.,0.003,0.00001))
+        # plt.show()
+        new_p_indices = np.where(distances>threshold)    # 5e-5
+        
+        return new_p_indices
+        
+    def align(self, model, data):
+
+        np.set_printoptions(precision=3, suppress=True)
+        model_zerocentered = model - model.mean(1).reshape((3,-1))
+        data_zerocentered = data - data.mean(1).reshape((3,-1))
+
+        W = np.zeros((3, 3))
+        for column in range(model.shape[1]):
+            W += np.outer(model_zerocentered[:, column], data_zerocentered[:, column])
+        U, d, Vh = np.linalg.linalg.svd(W.transpose())
+        S = np.matrix(np.identity(3))
+        if (np.linalg.det(U) * np.linalg.det(Vh) < 0):
+            S[2, 2] = -1
+        rot = U*S*Vh
+        trans = data.mean(1).reshape((3,-1)) - rot * model.mean(1).reshape((3,-1))
+
+        model_aligned = rot * model + trans
+        alignment_error = model_aligned - data
+
+        trans_error = np.sqrt(np.sum(np.multiply(
+            alignment_error, alignment_error), 0)).A[0]
+
+        return rot, trans, trans_error
