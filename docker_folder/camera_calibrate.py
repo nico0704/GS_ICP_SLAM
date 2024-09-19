@@ -26,11 +26,11 @@ cx = intrinsics.ppx
 cy = intrinsics.ppy
 depth_trunc = 8.0
 depth_scale = 65.365
-print(f"Width: {W}, Height: {H}, fx: {fx}, fy: {fy}, cx: {cx}, cy: {cy}, Depth Scale: {depth_scale}")
+print(f"Width: {W}, Height: {H}, fx: {fx}, fy: {fy}, cx: {cx}, cy: {cy}, Depth Scale: {depth_scale}, Depth Trunc: {depth_trunc}")
 
 ## write calibration file ##
 log_file_path = os.path.join(output_dir, 'caminfo.txt')
 with open(log_file_path, 'w') as log_file:
     log_file.write("## camera parameters\n")
     log_file.write("W H fx fy cx cy depth_scale depth_trunc dataset_type\n")
-    log_file.write(f"{W} {H} {fx} {fy} {cx} {cy} {depth_scale} 3.0 custom\n")
+    log_file.write(f"{W} {H} {fx} {fy} {cx} {cy} {depth_scale} {depth_trunc} custom\n")
