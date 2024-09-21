@@ -1,11 +1,16 @@
+# This class controls an Intel RealSense camera (D400-series) to capture color and depth images, 
+# with the option to save them in a specified directory.
+# It automatically retrieves calibration parameters when initializing.
+# The camera's calibration parameters are retrieved and saved to a file optionally.
+
 import numpy as np
-import open3d as o3d
 import cv2
 import os
 import pyrealsense2 as rs
 from datetime import datetime
 
 # https://github.com/IntelRealSense/librealsense/tree/master/wrappers/python/examples
+# https://github.com/IntelRealSense/librealsense/issues/3473
 
 align_to = rs.stream.color
 align = rs.align(align_to)
@@ -15,9 +20,9 @@ class Camera:
         self.cap = 0
         self.pipeline = rs.pipeline()
         self.config = rs.config()
-        self.depth_trunc = 8.0
-        self.config.enable_stream(rs.stream.depth, 640, 480, rs.format.z16, 30)
-        self.config.enable_stream(rs.stream.color, 640, 480, rs.format.bgr8, 30)
+        self.depth_trunc = 3.0
+        self.config.enable_stream(rs.stream.depth, 1280, 720, rs.format.z16, 30)
+        self.config.enable_stream(rs.stream.color, 1280, 720, rs.format.bgr8, 30)
         print("Trying to starting realsense pipeline.")
         try:
             self.pipeline.start(self.config)
