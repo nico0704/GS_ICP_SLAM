@@ -1,3 +1,8 @@
+# This script captures and saves the calibration parameters of an Intel RealSense camera (D400-series).
+# It initializes the camera pipeline, configures the depth and color streams, and retrieves intrinsics like width, height, focal length, and depth scale.
+# The camera parameters are then written to a timestamped calibration file ('caminfo.txt') in a specified directory.
+# The script ensures the parameters are logged for future reference, including intrinsic details like focal lengths and principal point coordinates.
+
 import os
 import pyrealsense2 as rs
 from datetime import datetime
