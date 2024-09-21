@@ -1,3 +1,7 @@
+# This code performs the tracking part of the gs_icp_slam algorithm for live data stream.
+# It initializes a camera which handles capturing of the depth and rgb images + retrieving calibration parameters.
+# The main loop stops after max_images (default 2000) have been taken.
+
 import os
 import torch
 import torch.multiprocessing as mp
@@ -30,6 +34,12 @@ class Tracker(SLAMParameters):
         self.test = slam.test
         self.rerun_viewer = slam.rerun_viewer
         self.iter_shared = slam.iter_shared
+        
+        # live cam params
+        self.max_images = slam.stop_after
+        self.save_images = slam.save_images
+        self.save_dir = slam.save_dir
+        self.fps = slam.fps
         
         self.camera_parameters = slam.camera_parameters
         self.W = slam.W
@@ -106,29 +116,19 @@ class Tracker(SLAMParameters):
         self.reg.set_max_knn_distance(self.knn_max_distance)
         if_mapping_keyframe = False
         
+        print("Initializing main camera.")
+        self.camera = Camera(stop_after=self.max_images, save_images=self.save_images, save_dir=self.save_dir)
+        
         self.total_start_time = time.time()
-        self.num_images = 2000
         ii = 0
 
-        self.camera = Camera()
-        self.save_results = False
-        self.fps = 30
-
-        os.makedirs("dataset/live_test/rgb", exist_ok=True)
-        os.makedirs("dataset/live_test/depth", exist_ok=True)
-
-        num_images = 0
-        while num_images < self.num_images:
-            print(f"processing images {num_images}...")
+        imgs_taken = 0
+        while imgs_taken < self.max_images:
             rgb_image, depth_image = self.camera.get_images()
-            if self.save_results:
-                cv2.imwrite(f"dataset/live_test/rgb/frame{num_images:06d}.jpg", rgb_image)
-                cv2.imwrite(f"dataset/live_test/depth/depth{num_images:06d}.png", depth_image)
-            num_images += 1            
-            time.sleep(1 / self.fps)
-
-            if num_images < 10:
-                continue
+            imgs_taken += 1
+            if imgs_taken < 10:
+                continue           
+            time.sleep(1/self.fps)
             
             current_image, depth_image = rgb_image, depth_image
 
@@ -250,7 +250,7 @@ class Tracker(SLAMParameters):
                 # Tracking keyframe
                 len_corres = len(np.where(distances<self.overlapped_th)[0]) # 5e-4 self.overlapped_th
                 
-                if  (self.iteration_images >= self.num_images-1 \
+                if  (self.iteration_images >= self.max_images-1 \
                     or len_corres/distances.shape[0] < self.keyframe_th):
                     if_tracking_keyframe = True
                     self.from_last_tracking_keyframe = 0
@@ -350,7 +350,7 @@ class Tracker(SLAMParameters):
         
         # Tracking end
         self.end_of_dataset[0] = 1
-        print(f"System FPS: {1/((time.time()-self.total_start_time)/self.num_images):.2f}")
+        print(f"System FPS: {1/((time.time()-self.total_start_time)/imgs_taken):.2f}")
 
         self.camera.stop()
 
