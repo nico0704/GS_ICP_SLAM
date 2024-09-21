@@ -1,4 +1,9 @@
 # This code runs the gs_icp_slam algorithm with a stream of live data from a depth camera.
+# Following args can be specified for the live stream version:
+    # save_images: A flag that determines whether or not to save the captured images.
+    # save_dir: Specifies the directory where the images will be saved.
+    # stop_after: Sets the maximum number of images to capture and process (default is 2000).
+    # fps: Defines the frame rate (frames per second) for capturing images (default is 30 fps).
 
 import os
 import torch
@@ -230,7 +235,7 @@ if __name__ == "__main__":
     parser.add_argument("--rerun_viewer", action="store_true", default=False)
     parser.add_argument("--save_images", action='store_true', default=None)
     parser.add_argument("--save_dir", help="directory to save the taken images", default="dataset/custom_{}".format(datetime.now().strftime("%d%m%Y_%H_%M")))
-    parser.add_argument("--stop_after", default=500)
+    parser.add_argument("--stop_after", default=2000)
     parser.add_argument("--fps", default=30)
     
     args = parser.parse_args()
