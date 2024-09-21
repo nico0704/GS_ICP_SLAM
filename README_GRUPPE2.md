@@ -21,7 +21,7 @@
     - allerdings später festgestellt, dass die Werte zum Teil nicht stimmen können
     - deshalb Kalibrierungsparameter aus Kamera ausgelesen
     - dabei aber festgestellt, dass Tiefenwerte nicht angegeben werden können -> allerdings Seite gefunden, auf der 
-    Angaben zu Tiefenparametern für diese Kamera zu finden sind (TODO: Link zur Seite) 
+    Angaben zu Tiefenparametern für diese Kamera zu finden sind ([Intel real sense support](https://support.intelrealsense.com/hc/en-us/community/posts/360050711414-Does-the-depth-scale-of-the-D435-change-with-each-run-each-frame-or-is-it-fixed) 
     - auf Basis der Kalibrierungsparameter wird config-Datei erstellt
 4. Eigenen Datensatz erstellen
     - zum Erstellen des eigenen Datensatz Python-Skript [image_grabber.py](docker_folder/image_grabber.py) erstellt
