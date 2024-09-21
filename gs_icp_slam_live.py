@@ -21,7 +21,7 @@ from utils.graphics_utils import focal2fov
 from scene.shared_objs import SharedCam, SharedGaussians, SharedPoints, SharedTargetPoints
 from gaussian_renderer import render, network_gui
 from mp_Tracker_live import Tracker
-from mp_Mapper_live import Mapper
+from mp_Mapper import Mapper
 from camera import Camera
 
 torch.multiprocessing.set_sharing_strategy('file_system')
@@ -53,7 +53,7 @@ class GS_ICP_SLAM(SLAMParameters):
         # live cam params
         self.save_images = args.save_images
         self.save_dir = args.save_dir
-        self.stop_after = args.stop_after
+        self.stop_after = float(args.stop_after)
         self.fps = float(args.fps)
         
         if self.rerun_viewer:
@@ -80,14 +80,6 @@ class GS_ICP_SLAM(SLAMParameters):
             pass
         
         self.trajmanager = TrajManager(self.camera_parameters[8], self.dataset_path)
-        
-        # prepare directories to store images
-        if self.save_images:
-            self.rgb_path = os.path.join(self.dataset_path, "rgb")
-            self.depth_path = os.path.join(self.dataset_path, "depth")
-            os.makedirs(self.dataset_path, exist_ok=True)
-            os.makedirs(self.rgb_path, exist_ok=True)
-            os.makedirs(self.depth_path, exist_ok=True)
         
         print("Taking test images.")
         test_rgb_img, test_depth_img = self.camera.get_images()
