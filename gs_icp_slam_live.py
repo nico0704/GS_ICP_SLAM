@@ -1,3 +1,5 @@
+# This code runs the gs_icp_slam algorithm with a stream of live data from a depth camera.
+
 import os
 import torch
 import torch.multiprocessing as mp
@@ -75,7 +77,7 @@ class GS_ICP_SLAM(SLAMParameters):
         self.trajmanager = TrajManager(self.camera_parameters[8], self.dataset_path)
         
         # prepare directories to store images
-        if self.save_results:
+        if self.save_images:
             self.rgb_path = os.path.join(self.dataset_path, "rgb")
             self.depth_path = os.path.join(self.dataset_path, "depth")
             os.makedirs(self.dataset_path, exist_ok=True)
@@ -213,7 +215,7 @@ if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument("--dataset_path", help="dataset path to store the images", default=None)
     parser.add_argument("--config", help="caminfo", default="configs/Replica/caminfo.txt")
-    parser.add_argument("--output_path", help="output path", default="output/room0")
+    parser.add_argument("--output_path", help="output path", default="output/new_calib_test")
     parser.add_argument("--keyframe_th", default=0.7)
     parser.add_argument("--knn_maxd", default=99999.0)
     parser.add_argument("--verbose", action='store_true', default=False)
@@ -228,7 +230,7 @@ if __name__ == "__main__":
     parser.add_argument("--rerun_viewer", action="store_true", default=False)
     parser.add_argument("--save_images", action='store_true', default=None)
     parser.add_argument("--save_dir", help="directory to save the taken images", default="dataset/custom_{}".format(datetime.now().strftime("%d%m%Y_%H_%M")))
-    parser.add_argument("--stop_after", default=200)
+    parser.add_argument("--stop_after", default=500)
     parser.add_argument("--fps", default=30)
     
     args = parser.parse_args()
