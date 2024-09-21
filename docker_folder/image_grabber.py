@@ -1,3 +1,9 @@
+# This script controls an Intel RealSense camera to capture synchronized color and depth images.
+# It creates a timestamped directory structure to save captured images (color as JPG, depth as PNG).
+# The RealSense pipeline is initialized, streams are configured, and color-depth alignment is applied.
+# Images are captured in a loop at regular intervals (0.1 seconds), until the user stops the process.
+# Depth images are scaled for visibility before saving. The script stops upon user request.
+
 import cv2
 import os
 import time
