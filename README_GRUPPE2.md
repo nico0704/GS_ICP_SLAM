@@ -64,4 +64,9 @@
         - [mp_Tracker_live.py](mp_Tracker_live.py)
         - [mp_Tracker_live.py](gs_icp_slam_live.py)
         - [camera.py](camera.py)
-9. Beschreibung der Änderungen 
+9. Beschreibung der Änderungen
+
+## Visualisierung
+
+Um die Gaussians des GS_ICP_SLAM besser darzustellen, bzw. diese greifbar und vorstellbar zu machen, haben wir die Gaussians in Blender und Unity(VR) gerendert. Die Ergebnisse werden in der [Visualisierungs-Doku](3D_Visualization/3d_visualization_docs.md) erläutert.
+
