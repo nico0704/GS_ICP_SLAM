@@ -4,8 +4,11 @@ import struct
 input_ply = "scene.ply"
 output_ply = "output.ply"
 
-# Number of additional "f_rest_" fields (45 fields)
+# Number of additional "f_rest_" fields for Unity mode (45 fields)
 f_rest_count = 45
+
+# Mode: either "blender" or "unity"
+mode = "blender"  # Change this to "unity" for Unity mode
 
 # Function to read binary data in Little Endian format
 def read_vertex_data(file, vertex_count, vertex_format):
@@ -38,24 +41,59 @@ with open(input_ply, 'rb') as f:
     # Read the vertex data
     vertices = read_vertex_data(f, vertex_count, vertex_format)
 
-# Create a new header with the additional fields
+# Create a new header based on the selected mode
 new_header = []
-for line in header:
-    if "property float opacity" in line:
-        # Insert the new "f_rest_" fields before "opacity"
-        new_header += [f"property float f_rest_{i}" for i in range(f_rest_count)]
-    new_header.append(line)
+if mode == "blender":
+    # Create the new header for Blender mode
+    new_header = [
+        "ply",
+        "format binary_little_endian 1.0",
+        f"element vertex {vertex_count}",
+        "property float x",
+        "property float y",
+        "property float z",
+        "property uchar red",
+        "property uchar green",
+        "property uchar blue",
+        "property float nx",
+        "property float ny",
+        "property float nz",
+        "end_header"
+    ]
+elif mode == "unity":
+    for line in header:
+        if "property float opacity" in line:
+            # Insert the new "f_rest_" fields before "opacity" in Unity mode
+            new_header += [f"property float f_rest_{i}" for i in range(f_rest_count)]
+        new_header.append(line)
 
-# Write the new PLY file with the additional "f_rest_" fields
+# Write the new PLY file with the selected mode changes
 with open(output_ply, 'wb') as f:
     # Write the new header
     f.write("\n".join(new_header).encode('utf-8') + b"\n")
     
-    # Write the modified vertex data
-    for vertex in vertices:
-        # Original structure: x, y, z, nx, ny, nz, f_dc_0, f_dc_1, f_dc_2, opacity, scale_0, scale_1, scale_2, rot_0, rot_1, rot_2, rot_3
-        # New structure: x, y, z, nx, ny, nz, f_dc_0, f_dc_1, f_dc_2, [f_rest_0...f_rest_43], opacity, scale_0, scale_1, scale_2, rot_0, rot_1, rot_2, rot_3
-        new_vertex_data = vertex[:9] + (0.0,) * f_rest_count + vertex[9:]
-        f.write(struct.pack("<" + "f" * len(new_vertex_data), *new_vertex_data))
+    if mode == "unity":
+        # In Unity mode, we modify the vertex data by adding f_rest_ fields
+        for vertex in vertices:
+            # Original structure: x, y, z, nx, ny, nz, f_dc_0, f_dc_1, f_dc_2, opacity, scale_0, scale_1, scale_2, rot_0, rot_1, rot_2, rot_3
+            # New structure: x, y, z, nx, ny, nz, f_dc_0, f_dc_1, f_dc_2, [f_rest_0...f_rest_43], opacity, scale_0, scale_1, scale_2, rot_0, rot_1, rot_2, rot_3
+            new_vertex_data = vertex[:9] + (0.0,) * f_rest_count + vertex[9:]
+            f.write(struct.pack("<" + "f" * len(new_vertex_data), *new_vertex_data))
+    elif mode == "blender":
+        # In Blender mode, convert f_dc_0, f_dc_1, f_dc_2 to RGB (uchar)
+        for vertex in vertices:
+            # Extract the original float values for f_dc_0, f_dc_1, f_dc_2
+            x, y, z = vertex[:3]
+            nx, ny, nz = vertex[3:6]
+            f_dc_0, f_dc_1, f_dc_2 = vertex[6:9]
 
-print(f"Conversion complete. New PLY file saved as: {output_ply}")
+            # Convert f_dc_0, f_dc_1, f_dc_2 (assumed to be in range [0, 1]) to uchar (range 0-255)
+            red = int(max(0, min(255, f_dc_0 * 255)))   # Clamp to [0, 255]
+            green = int(max(0, min(255, f_dc_1 * 255))) # Clamp to [0, 255]
+            blue = int(max(0, min(255, f_dc_2 * 255)))  # Clamp to [0, 255]
+
+            # Pack the data into the new format (x, y, z, red, green, blue, nx, ny, nz)
+            new_vertex_data = (x, y, z, red, green, blue, nx, ny, nz)
+            f.write(struct.pack("<fffBBBfff", *new_vertex_data))
+
+print(f"Conversion complete in {mode} mode. New PLY file saved as: {output_ply}")
