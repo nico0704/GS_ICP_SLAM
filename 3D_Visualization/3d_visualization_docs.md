@@ -99,7 +99,34 @@ Addons:
 
 ### Vorgehen
 
+1. Importieren von PLY Files in Blender
+   - Zunächst musste ein Weg gefunden werden, PLY Files in Blender zu importieren --> [Import-PLY-As-Verts](https://github.com/TombstoneTumbleweedArt/import-ply-as-verts) Addon.
+   - Die GS_ICP_SLAM PLY haben mit dem Addon nicht funktioniert, da das Addon ein anderes PLY Format erwartet.
+   - Mit dem [PLY-Converter](#ply-converter) werden die PLY Files nun in das erwartete Format konvertiert und können in Blender importiert werden.
+   - Die Gaussians werden in Blender als Vertices importiert/repräsentiert.
+2. Rendern von Gaussians/Vertices
+
+   Die Vertices können mit zwei verschieden Methoden gerendert werden:
+
+   **Render as Point Cloud**
+
+    - Vertices werden als Points gerendert.
+    - Farbe der Points werden durch die Farbattribute der jeweiligen Vertices festgelegt.
+    - Diese Methode ist effizienter, da keine wirkliche Geometrie/Mesh erzeugt wird. Allerdings kann so die Punktwolke nicht im Viewport gerendert werden.
+
+   **Instancing**
+
+   - Vertices werden als Mesh gerendert.
+   - Für jeden Vertex ein Cube(Würfel) instanziiert.
+   - Farbe der Cubes werden durch die Farbattribute der jeweiligen Vertices festgelegt.
+   - Diese Methode ist rechenintensiver, allerdings können die Vertices/Cubes auch im Viewport gerendert werden.
+
+3. Rendern der GS_ICP_SLAM Ergebnisse
+   - Zunächst wurden für das TUM und das REPLICA Datenset die Ergebnisse des GS_ICP_SLAM in Blender mit beiden Methoden gerendert
+
 ### Ergebnisse
+
+
 
 ## Unity VR
 
@@ -118,6 +145,7 @@ Hardware:
 ### Vorgehen
 
 1. Unity VR Template
+   - 
 2. Unity URP Projekt
 3. Unity Built-in Render Pipeline Projekt
 
@@ -128,3 +156,5 @@ Hardware:
 Die PLY Files sind teilsweise zu groß, um sie in diesem Repo hochladen zu können. Daher können die PLY Files über diesen [Link](https://workupload.com/archive/zUcR5VaSbQ) heruntergeladen werden (Verfügbar bis Ende Oktober 2024, danach wieder auf Anfrage).
 
 ## Blender File
+
+Da auch die Blender File durch die importierten PLY Files zu groß ist, um sie in diesem Repo hochladen zu können, kann sie über diesen [Link]() heruntergeladen werden (Verfügbar bis Ende Oktober 2024, danach wieder auf Anfrage)
