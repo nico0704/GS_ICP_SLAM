@@ -73,5 +73,7 @@ RUN sudo make install
 
 #### rerun
 RUN pip install rerun-sdk
+#### pyrealsense2
+RUN pip install pyrealsense2
 
 WORKDIR /home/GS_ICP_SLAM
