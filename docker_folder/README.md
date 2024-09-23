@@ -30,7 +30,7 @@ chmod +x install_submodules.sh
 ./install_submodules.sh    
 ```
 
-## 6. Use live stream code or jump to 7.
+## 6. Run the algorithm with live stream data from a realsense depth camera or jump to 7.
 - Connect your realsense depth camera
 ```bash
 python gs_icp_slam_live.py
