@@ -126,6 +126,21 @@ Addons:
 
 ### Ergebnisse
 
+#### TUM Dataset
+
+<img src="Blender/RenderOutput/TUM/TUM_Instancing.png" width="640" height="480" />
+
+<img src="Blender/RenderOutput/TUM/TUM_PointCloud.png" width="640" height="480" />
+
+#### Point Cloud Rendering vs Instancing
+
+<img src="Blender/RenderOutput/TUM/TUM_PointCloud.gif" width="640" height="480" />
+
+<img src="Blender/RenderOutput/TUM/TUM_Instancing.gif" width="640" height="480" />
+
+#### Replica Dataset
+
+#### Custom Dataset
 
 
 ## Unity VR
@@ -140,16 +155,59 @@ Packages:
 - [UnityGaussianSplatting](https://github.com/aras-p/UnityGaussianSplatting)
 
 Hardware:
-- Quest 3
+- Meta Quest 3
 
 ### Vorgehen
 
-1. Unity VR Template
-   - 
-2. Unity URP Projekt
-3. Unity Built-in Render Pipeline Projekt
+1. UnityGaussianSplatting Package testen
+   - Beispiel Unity Projekt des Github Repos getestet.
+   - Import der GS_ICP_SLAM PLY Files hat nicht funktioniert, da das Package ein anderes PLY Format erwartet --> [PLY-Converter](#ply-converter)
+   - Mit dem [PLY-Converter](#ply-converter) konnten die GS_ICP_SLAM Ergebnisse dann erfolgreich in Unity dargestellt/gerendert werden.
+   - Beispiel Projekt ist nicht VR! --> UnityGaussianSplatting Package mit VR kombinieren.
+2. Unity VR Template (URP)
+   - Zunächst haben wir in einer aktuellen Unity Editor Version ein Unity VR Projekt mit dem VR Core Template zu erstellt.
+   - Anschließend wurde das UnityGaussianSplatting Package in das Projekt importiert.
+   - Diverse Fehler/Errors: Gaussians werden weder im Editor noch im Game View gerendert.
+3. Unity URP Projekt (Standalone apk build)
+   - Da das Package mit dem Unity VR Template nicht funktioniert hat, haben wir ein Standard Unity URP Projekt in der Editor Version des Beispielprojekts erstellt.
+   - Anschließend wurde das UnityGaussianSplatting Package in das Projekt importiert --> die Gaussians wurden im Editor und Game View korrekt und ohne Probleme gerendert.
+   - Nun musste das Projekt für VR vorbereitet werden, um die Gaussians in VR sehen zu können.
+   - Dafür wurden die notwendigen XR Packages von Unity importiert und das Projekt entsprechend eingestellt.
+   - Anschließend wurde ein VR/XR Character Controller erstellt, der notwendig ist, um das Projekt in VR erleben zu können.
+   - Um das Projekt zu testen, wurde versucht eine Standalone apk zu bauen und auf die Meta Quest 3 zu laden --> ohne Erfolg: Build war nicht erfolgreich (190 Build Fehler)
+   - Nach langer Recherche und Nachdenken zu der Erkenntnis gelangt, dass das UnityGaussianSplatting Package nicht darauf ausgelegt ist als standalone apk build auf der Meta Quest 3 direkt zu laufen --> als Windows build erstellen und über ein Kabel auf die Quest 3 streamen.
+4. Unity URP Projekt (Windows build / wired to computer setup)
+   - Das Projekt wurde von Android auf Windows umgestellt und angepasst.
+   - Mit der Meta Quest Link App auf Windows kann die Quest 3 mit dem Computer verbunden werden und der Computer kann auf die Brille gestreamt/übertragen werden.
+   - Der Unity Editor Playmode kann zum Testen direkt auf die Brille gestreamt werden und es ist kein vorherigen Builden der Anwendung notwendig.
+   - Die Gaussians werden auf der Brille nicht korrekt gerendert. Sie sind doppelt zu sehen auf beiden Linsen der Brille. Zudem verändert sich die Position der Gaussians mit der Blickrichtung der Brille.
+   - Nach langem Testen, Einstellen und Recherchieren sind wir zu der Erkenntnis gelangt, dass die Universal Render Pipeline (URP) von Unity Probleme hat die Gaussians korrekt zu rendern. --> Wechsel zur Built-in Render Pipeline von Unity
+5. Unity Built-in Render Pipeline Projekt
+   - Es wurde ein komplett neues Unity Projekt mit der Built-in Render Pipeline erstellt.
+   - Erneutes Installieren des UnityGaussianSplatting Package, Vorbereiten des Projekts auf VR, ...
+   - Nun werden die Gaussians in VR korrekt gerendert
 
 ### Ergebnisse
+
+#### TUM Dataset
+
+<img src="Unity/RenderOutput/TUM/TUM_VR_1.png" width="320" height="240" />
+
+<img src="Unity/RenderOutput/TUM/TUM_VR_2.png" width="320" height="240" />
+
+<img src="Unity/RenderOutput/TUM/TUM_VR_3.png" width="320" height="240" />
+
+#### Replica Dataset
+
+<img src="Unity/RenderOutput/REPLICA/REPLICA_VR_1.png" width="320" height="240" />
+
+<img src="Unity/RenderOutput/REPLICA/REPLICA_VR_2.png" width="320" height="240" />
+
+<img src="Unity/RenderOutput/REPLICA/REPLICA_VR_3.png" width="320" height="240" />
+
+<img src="Unity/RenderOutput/REPLICA/REPLICA_VR_4.png" width="320" height="240" />
+
+#### Custom Dataset
 
 ## PLY Files
 
