@@ -1,4 +1,4 @@
-# Running GS_ICP_SLAM with docker
+# Running GS_ICP_SLAM with docker and custom dataset
 
 ## 1. Clone forked repository
 ```bash
@@ -30,7 +30,18 @@ chmod +x install_submodules.sh
 ./install_submodules.sh    
 ```
 
-## 6. Create your own custom dataset and config
+## 6. Use live stream code or jump to 7.
+- Connect your realsense depth camera
+```bash
+python gs_icp_slam_live.py
+```
+- You can specify the following arguments:
+  - `save_images`
+  - `save_dir`
+  - `stop_after`
+  - `fps`
+
+## 7. Create your own custom dataset and config
 - Your custom dataset should have the following structure:
 ```bash
 custom_dataset/
@@ -51,7 +62,7 @@ H W fx fy cx cy depth_scale depth_trunc dataset_type
 1200 680 600.0 600.0 599.5 339.5 6553.5 12.0 custom
 ```
 
-## 7. Run gs_icp_slam.py
+## 8. Run gs_icp_slam.py
 ```bash
 cd /home/GS_ICP_SLAM
 python -W ignore -W gs_icp_slam.py --dataset_path /path/to/your/dataset --config /path/to/your/config/caminfo.txt --rerun_viewer
