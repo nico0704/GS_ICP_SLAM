@@ -11,7 +11,7 @@
 1. Aufsetzen des Algorithmus 
     - hat einige Probleme an den Hochschulrechnern ergeben
     - durch ausprobieren verschiedener Lösungen aber schlussendlich funktioniert, indem "Docker Run"-Befehl angepasst wurde 
-    - weiteres Problem, dass auch bei jedem Neustart des PCs ein Problem ist, ist dass Grafikkarte nicht auf Docker-Container gefunden wird -> auch hier Lösung gefunden (TODO: Link zur Seite)
+    - weiteres Problem, dass auch bei jedem Neustart des PCs ein Problem ist, ist dass Grafikkarte nicht auf Docker-Container gefunden wird -> auch hier Lösung gefunden ([Nvidia Developer Forum](https://forums.developer.nvidia.com/t/new-computer-install-gpu-docker-error/266084/6))
 2. Austesten des Algorithmus mithilfe der zwei gegebenen Datensätze TUM und REPLICA
     - TUM lief problemlos durch, allerdings mit deutlich schlechteren Ergebnisse als in Paper gezeigt
     - REPLICA lief gar nicht, da Pfade im Code falsch angegeben waren 
