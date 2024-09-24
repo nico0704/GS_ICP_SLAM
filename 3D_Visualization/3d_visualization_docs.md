@@ -128,15 +128,15 @@ Addons:
 
 #### TUM Dataset
 
-<img src="Blender/RenderOutput/TUM/TUM_Instancing.png" width="640" height="480" />
+<img src="RenderOutput/Blender/TUM/TUM_Instancing.png" width="640" height="480" />
 
-<img src="Blender/RenderOutput/TUM/TUM_PointCloud.png" width="640" height="480" />
+<img src="RenderOutput/Blender/TUM/TUM_PointCloud.png" width="640" height="480" />
 
 #### Point Cloud Rendering vs Instancing
 
-<img src="Blender/RenderOutput/TUM/TUM_PointCloud.gif" width="640" height="480" />
+<img src="RenderOutput/Blender/TUM/TUM_PointCloud.gif" width="640" height="480" />
 
-<img src="Blender/RenderOutput/TUM/TUM_Instancing.gif" width="640" height="480" />
+<img src="RenderOutput/Blender/TUM/TUM_Instancing.gif" width="640" height="480" />
 
 #### Replica Dataset
 
@@ -191,27 +191,31 @@ Hardware:
 
 #### TUM Dataset
 
-<img src="Unity/RenderOutput/TUM/TUM_VR_1.png" width="320" height="240" />
+<img src="RenderOutput/Unity/TUM/TUM_VR_1.png" width="320" height="240" />
 
-<img src="Unity/RenderOutput/TUM/TUM_VR_2.png" width="320" height="240" />
+<img src="RenderOutput/Unity/TUM/TUM_VR_2.png" width="320" height="240" />
 
-<img src="Unity/RenderOutput/TUM/TUM_VR_3.png" width="320" height="240" />
+<img src="RenderOutput/Unity/TUM/TUM_VR_3.png" width="320" height="240" />
 
 #### Replica Dataset
 
-<img src="Unity/RenderOutput/REPLICA/REPLICA_VR_1.png" width="320" height="240" />
+<img src="RenderOutput/Unity/REPLICA/REPLICA_VR_1.png" width="320" height="240" />
 
-<img src="Unity/RenderOutput/REPLICA/REPLICA_VR_2.png" width="320" height="240" />
+<img src="RenderOutput/Unity/REPLICA/REPLICA_VR_2.png" width="320" height="240" />
 
-<img src="Unity/RenderOutput/REPLICA/REPLICA_VR_3.png" width="320" height="240" />
+<img src="RenderOutput/Unity/REPLICA/REPLICA_VR_3.png" width="320" height="240" />
 
-<img src="Unity/RenderOutput/REPLICA/REPLICA_VR_4.png" width="320" height="240" />
+<img src="RenderOutput/Unity/REPLICA/REPLICA_VR_4.png" width="320" height="240" />
 
 #### Custom Dataset
 
+## Setup Unity Project
+
+Um das Unity Projekt selbst aufzusetzen und zu starten, folge dem [Unity Setup Guide](./unity_setup_guide.md).
+
 ## PLY Files
 
-Die PLY Files sind teilsweise zu groß, um sie in diesem Repo hochladen zu können. Daher können die PLY Files über diesen [Link](https://workupload.com/archive/zUcR5VaSbQ) heruntergeladen werden (Verfügbar bis Ende Oktober 2024, danach wieder auf Anfrage).
+Die PLY Files sind teilsweise zu groß, um sie in diesem Repo hochladen zu können. Daher können die PLY Files über diesen [Link](https://workupload.com/file/xJYkMzj9cAE) heruntergeladen werden (Verfügbar bis Ende Oktober 2024, danach wieder auf Anfrage).
 
 ## Blender File
 
