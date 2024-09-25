@@ -148,6 +148,7 @@ Addons:
 
 <img src="RenderOutput/Blender/TUM/TUM_Instancing.png" width="640" height="480" />
 Figure 1: Blender-Instancing-TUM<br>
+<br>
 
 <img src="RenderOutput/Blender/TUM/TUM_PointCloud.png" width="640" height="480" />
 Figure 2: Blender-PointCloud-TUM<br>
