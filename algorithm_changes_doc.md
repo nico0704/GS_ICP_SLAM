@@ -55,7 +55,7 @@
     - deshalb versucht Live-Daten zu nutzen, um direkt sehen zu können, wo Algorithmus scheitert 
     - dazu wurden folgende Dateien erstellt:
         - [mp_Tracker_live.py](mp_Tracker_live.py)
-        - [mp_Tracker_live.py](gs_icp_slam_live.py)
+        - [gs_icp_slam_live.py](gs_icp_slam_live.py)
         - [camera.py](camera.py)
 9. Verbesserung der Ergebnisse: 
     - Kamerakalibierung angepasst -> zunächst ausgelesenen Werte haben nicht gestimmt 
