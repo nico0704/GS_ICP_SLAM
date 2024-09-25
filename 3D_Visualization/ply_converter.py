@@ -6,9 +6,30 @@ output_ply = "output.ply"
 
 # Number of additional "f_rest_" fields for Unity mode (45 fields)
 f_rest_count = 45
+# Assumption for the spherical harmonic coefficient of the zeroth order
+C0 = 0.28209479177387814
 
 # Mode: either "blender" or "unity"
 mode = "blender"  # Change this to "unity" for Unity mode
+
+# Function for calculating RGB values from f_dc_0, f_dc_1, f_dc_2
+def calculate_rgb(f_dc_0, f_dc_1, f_dc_2):
+    # Calculate R, G, B from the f_dc_ values
+    R = 0.5 + C0 * f_dc_0
+    G = 0.5 + C0 * f_dc_1
+    B = 0.5 + C0 * f_dc_2
+    
+    # Clamping the values to the range [0, 1]
+    R = max(0, min(1, R))
+    G = max(0, min(1, G))
+    B = max(0, min(1, B))
+    
+    # Conversion to the range [0, 255]
+    R = int(R * 255)
+    G = int(G * 255)
+    B = int(B * 255)
+    
+    return R, G, B
 
 # Function to read binary data in Little Endian format
 def read_vertex_data(file, vertex_count, vertex_format):
@@ -87,10 +108,8 @@ with open(output_ply, 'wb') as f:
             nx, ny, nz = vertex[3:6]
             f_dc_0, f_dc_1, f_dc_2 = vertex[6:9]
 
-            # Convert f_dc_0, f_dc_1, f_dc_2 (assumed to be in range [0, 1]) to uchar (range 0-255)
-            red = int(max(0, min(255, f_dc_0 * 255)))   # Clamp to [0, 255]
-            green = int(max(0, min(255, f_dc_1 * 255))) # Clamp to [0, 255]
-            blue = int(max(0, min(255, f_dc_2 * 255)))  # Clamp to [0, 255]
+            # Convert f_dc_0, f_dc_1, f_dc_2 to uchar (range 0-255)
+            red, green, blue = calculate_rgb(f_dc_0, f_dc_1, f_dc_2)
 
             # Pack the data into the new format (x, y, z, red, green, blue, nx, ny, nz)
             new_vertex_data = (x, y, z, red, green, blue, nx, ny, nz)
