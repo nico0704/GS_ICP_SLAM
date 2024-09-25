@@ -146,19 +146,16 @@ Addons:
 
 #### TUM Dataset
 
-<img src="RenderOutput/Blender/TUM/TUM_Instancing.png" width="640" height="480" />
+!<img src="RenderOutput/Blender/TUM/TUM_Instancing.png" width="640" height="480" />
 Figure 1: Blender-Instancing-TUM
 
-
-<img src="RenderOutput/Blender/TUM/TUM_PointCloud.png" width="640" height="480" />
+!<img src="RenderOutput/Blender/TUM/TUM_PointCloud.png" width="640" height="480" />
 Figure 2: Blender-PointCloud-TUM
-
 
 #### Point Cloud Rendering vs Instancing
 
 <img src="RenderOutput/Blender/TUM/TUM_Instancing.gif" width="640" height="480" />
 GIF 1: Blender-Instancing-TUM
-
 
 <img src="RenderOutput/Blender/TUM/TUM_PointCloud.gif" width="640" height="480" />
 GIF 2: Blender-PointCloud-TUM
@@ -176,28 +173,22 @@ Figure 4: Blender-Instancing-TUM-Correct Color
 <img src="RenderOutput/Blender/REPLICA/REPLICA_Instancing_1.png" width="640" height="480" />
 Figure 5: Blender-Instancing-REPLICA-1
 
-
 <img src="RenderOutput/Blender/REPLICA/REPLICA_Instancing_2.png" width="640" height="480" />
 Figure 6: Blender-Instancing-REPLICA-2
-
 
 #### Custom Dataset
 
 <img src="RenderOutput/Blender/CUSTOM/CUSTOM_Gang1_Instancing_1.png" width="640" height="480" />
 Figure 7: Blender-Instancing-CUSTOM-Gang1
 
-
 <img src="RenderOutput/Blender/CUSTOM/CUSTOM_Gang2_Instancing_1.png" width="640" height="480" />
 Figure 8: Blender-Instancing-CUSTOM-Gang2-1
-
 
 <img src="RenderOutput/Blender/CUSTOM/CUSTOM_Gang2_Instancing_2.png" width="640" height="480" />
 Figure 9: Blender-Instancing-CUSTOM-Gang2-2
 
-
 <img src="RenderOutput/Blender/CUSTOM/CUSTOM_Gang3_Instancing_1.png" width="640" height="480" />
 Figure 10: Blender-Instancing-CUSTOM-Gang3
-
 
 ## Unity VR
 
