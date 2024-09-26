@@ -47,8 +47,8 @@
         - [line 335 & 340](mp_Tracker.py#L335): da im eigenen Datensatz keine Daten zur Evaluation vorhanden sind, werden hier die Evaluationsansätze für den custom-Datensatz ausgeschlossen
         - [line 367](mp_Mapper.py#L367): auch hier werden die Bilder eingelesen, daher auch hier Funktion "get_images" für custom-Datensatz angepasst 
     4. traj_utils.py
-        - [line 25](utils/traj_utils.py#L25): hier wird die Funktion zum laden der Posen den custom-Datensatz aufgerufen
-        - [line 65](utils/traj_utils.py#L65): hier werden dann die entsprechenden Posen geladen -> algorithmus nutzt dazu eigentlich die ground-truth-daten, da es die aber für einen custom Datensatz nicht gibt, wird ein Vektor bestehend aus 1en als Posenliste gesetzt
+        - [line 25](utils/traj_utils.py#L25): hier wird die Funktion zum Laden der Posen für den custom-Datensatz aufgerufen
+        - [line 65](utils/traj_utils.py#L65): hier werden dann die entsprechenden Posen geladen -> Algorithmus nutzt dazu eigentlich die ground-truth-daten, da es die aber für einen custom Datensatz nicht gibt, wird ein Vektor bestehend aus 1en als Posenliste gesetzt
 7. Austesten von TUM mit eigenem Code
     - Code ist grundsätzlich durchgelaufen, aber mit dem eigenen Datensatz keine schönen Ergebnisse geliefert
     - deshalb Code mit TUM-Daten ausprobiert, um zu sehen, ob Code grundsätzlich funktioniert 
