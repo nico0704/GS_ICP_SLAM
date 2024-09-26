@@ -278,8 +278,8 @@ Um das Unity Projekt selbst aufzusetzen und zu starten, folge dem [Unity Setup G
 
 ## PLY Files
 
-Die PLY Files sind teilsweise zu groß, um sie in diesem Repo hochladen zu können. Daher können die PLY Files über diesen [Link](https://workupload.com/file/QVCBJSXqTkq) heruntergeladen werden (Verfügbar bis Ende Oktober 2024, danach wieder auf Anfrage).
+Die PLY Files sind teilsweise zu groß, um sie in diesem Repo hochladen zu können. Daher können die PLY Files über diesen [Link](https://workupload.com/file/JbQ6EZaw7ah) heruntergeladen werden (Verfügbar bis Ende Oktober 2024, danach wieder auf Anfrage).
 
 ## Blender File
 
-Da auch die Blender File durch die importierten PLY Files zu groß ist, um sie in diesem Repo hochladen zu können, kann sie über diesen [Link](https://workupload.com/file/eVksNyxJLpE) heruntergeladen werden (Verfügbar bis Ende Oktober 2024, danach wieder auf Anfrage)
+Da auch die Blender File durch die importierten PLY Files zu groß ist, um sie in diesem Repo hochladen zu können, kann sie über diesen [Link](https://workupload.com/file/rNcHn27raBt) heruntergeladen werden (Verfügbar bis Ende Oktober 2024, danach wieder auf Anfrage)

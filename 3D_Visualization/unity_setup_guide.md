@@ -4,7 +4,7 @@
 
 Since the Unity Gaussian Assets are too large for Github, they must be downloaded and packed into the repo:
 
-1. Download the [Unity Gaussian Assets](https://workupload.com/file/Y5eVcGM2bXF) (Verfügbar bis Ende Oktober 2024, danach wieder auf Anfrage)
+1. Download the [Unity Gaussian Assets](https://workupload.com/file/kJtT2seEbTh) (Verfügbar bis Ende Oktober 2024, danach wieder auf Anfrage)
 2. Unpack the zip and move the ```GaussianAssets``` Folder in to the Project [Asset Folder](Unity/projects/GaussianExample/Assets/)
 
 ## Install Unity Hub
