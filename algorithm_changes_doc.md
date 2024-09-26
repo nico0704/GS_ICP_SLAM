@@ -27,7 +27,11 @@
         - [mp_Mapper.py](mp_Mapper.py)
         - [mp_Tracker.py](mp_Tracker.py)
         - [traj_utils.py](utils/traj_utils.py)
-    - eine Anleitung zum Ausführen des Algorithmus auf eigenen Daten befindet sich hier: [README](docker_folder/README.md)
+    - zum Ausführen des eignen Algorithmus wurde der [docker_folder](docker_folder) mit folgenden Änderungen angepasst: 
+        - eine Anleitung zum Ausführen des Algorithmus auf eigenen (Live-)Daten befindet sich hier: [README](docker_folder/README.md)
+        - das [Dockerfile](docker_folder/Dockerfile) wurde vollständig überarbeitet
+        - zum Bauen des Docker-Containers mit funktionierender Rerun-Konfiguration wurde das [run](docker_folder/run.sh)-Skript erstellt
+        - zum Installieren der Submodule auf dem Container wurde das [submodules](docker_folder/install_submodules.sh)-Skript erstellt
 6. Beschreibung der Änderungen
     - grundsätzlich sind die Änderungen jeweils unter "custom" zu finden
     1. gs_icp_slam.py
