@@ -64,5 +64,5 @@
     - dabei hat Änderung der max_correspondence_distance (von 0.02 auf 0.1) am meisten Verbesserung gebracht
 
 ## Ergebnisse für Custom-Dataset
-<img src="3D_Visualization/rerun/custom/gang.gif" width="640" height="480" />
+<img src="3D_Visualization/rerun/gang.gif" width="640" height="480" />
 GIF Custom Gang<br><br>
