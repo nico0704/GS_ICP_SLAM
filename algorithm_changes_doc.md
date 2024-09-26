@@ -62,7 +62,13 @@
     - durch GUI von Realsense herausgefunden, dass Tiefenkalibrierungsdaten genutzt werden müssen
     - zusätzlich durch ausprobieren herausgefunden, dass folgende Default-Parameter für Replica optimiert sind [line 245](gs_icp_slam.py#L245)
     - dabei hat Änderung der max_correspondence_distance (von 0.02 auf 0.1) am meisten Verbesserung gebracht
+10. Evaluation
+    - Replica-Datensätze ausgeführt und mit Ergebnissen des Papers verglichen -> Fazit: Stimmen nahezu überein (detailierte Ergebnisse in [Übersichtsdokument](README_GRUPPE2.md)
+    - TUM-Datensätze evaluiert, dabei erst im Nachhinein festgestellt, dass Default-Parameter für TUM in (tum.sh)[tum.sh] stehen -> deshalb unsere Ergebnisse möglicherweise leicht verfälscht
+    - für eigene Datensätze ist FPS: 13 -> andere Evaluationswerte nicht möglich, da keine ground-truth-Daten vorhanden   
 
 ## Ergebnisse für Custom-Dataset
 <img src="3D_Visualization/rerun/gang.gif" width="640" height="480" />
 GIF Custom Gang<br><br>
+<img src="3D_Visualization/rerun/gang_2.gif" width="640" height="480" />
+GIF Custom Gang2<br><br>
