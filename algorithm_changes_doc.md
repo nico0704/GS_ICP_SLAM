@@ -27,7 +27,7 @@
         - [mp_Mapper.py](mp_Mapper.py)
         - [mp_Tracker.py](mp_Tracker.py)
         - [traj_utils.py](utils/traj_utils.py)
-    - zum Ausführen des eignen Algorithmus wurde der [docker_folder](docker_folder) mit folgenden Änderungen angepasst: 
+    - zum Ausführen des eigenen Algorithmus mit Docker wurde der [docker_folder](docker_folder) mit folgenden Änderungen angepasst: 
         - eine Anleitung zum Ausführen des Algorithmus auf eigenen (Live-)Daten befindet sich hier: [README](docker_folder/README.md)
         - das [Dockerfile](docker_folder/Dockerfile) wurde vollständig überarbeitet
         - zum Bauen des Docker-Containers mit funktionierender Rerun-Konfiguration wurde das [run](docker_folder/run.sh)-Skript erstellt
