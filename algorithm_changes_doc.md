@@ -40,7 +40,7 @@
         - [line 154](gs_icp_slam.py#L238): Auslesen der Bildordner für custom-Datensatz in Funktion "get_image_dirs"
     2. mp_Mapper.py
         - [line 61](mp_Mapper.py#L61): auch hier wird eigene "Startpose" gesetzt, da für eigenen Datensatz keine ground-truth-Posen vorhanden
-        - [line 275](mp_Mapper.py#L275): hierbei wurde die Funktion "calc_2d_metric" für das custom-Dataset ausgeschlossen [TODO: warum?]
+        - [line 275](mp_Mapper.py#L275): hierbei wurde die Funktion "calc_2d_metric" für das custom-Dataset ausgeschlossen 
         - [line 340](mp_Mapper.py#L340): auch hier werden die Bildordner eingelesen, daher auch hier Funktion "get_image_dirs" für custom-Datensatz angepasst 
     3. mp_Tracker.py
          - [line 57](mp_Tracker.py#L57): auch hier wird eigene "Startpose" gesetzt, da für eigenen Datensatz keine ground-truth-Posen vorhanden
