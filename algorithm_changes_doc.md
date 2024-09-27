@@ -69,7 +69,7 @@
 10. Evaluation
     - Replica-Datensätze ausgeführt und mit Ergebnissen des Papers verglichen -> Fazit: Stimmen nahezu überein (detailierte Ergebnisse in [Übersichtsdokument](README_GRUPPE2.md)
     - TUM-Datensätze evaluiert, dabei erst im Nachhinein festgestellt, dass Default-Parameter für TUM in (tum.sh)[tum.sh] stehen -> deshalb unsere Ergebnisse möglicherweise leicht verfälscht
-    - für eigene Datensätze ist FPS: 13 -> andere Evaluationswerte nicht möglich, da keine ground-truth-Daten vorhanden   
+    - für eigene Datensätze ist FPS: ca. 20 -> andere Evaluationswerte nicht möglich, da keine ground-truth-Daten vorhanden   
 
 ## Ergebnisse für Custom-Dataset
 <img src="3D_Visualization/rerun/gang.gif" width="640" height="480" />
