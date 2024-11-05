@@ -1,4 +1,4 @@
-# Running GS_ICP_SLAM with docker and custom dataset
+# Running GS_ICP_SLAM with docker and custom data
 
 ## 1. Clone forked repository
 ```bash
@@ -19,57 +19,59 @@ chmod +x run.sh
 
 ## 4. Access container
 ```bash
-docker exec -it gsicp_exp1 bash
+docker exec -it gs_icp_slam_container bash
 ```
 - name of container is set in `run.sh`
 
 ## 5. Install submodules (fast_gicp, diff-gaussian-rasterization, simple-knn)
-```bash
-cd /home/GS_ICP_SLAM/docker_folder
-chmod +x install_submodules.sh
-./install_submodules.sh    
-```
+  ```bash
+  cd /home/GS_ICP_SLAM/docker_folder
+  chmod +x install_submodules.sh
+  ./install_submodules.sh    
+  ```
 
-## 6. Run the algorithm with live stream data from a realsense depth camera or jump to 7.
-- Connect your realsense depth camera
-```bash
-python gs_icp_slam_live.py
-```
-- You can specify the following arguments:
-  - `save_images`
-  - `save_dir`
-  - `stop_after`
-  - `fps`
+## 6. Run the algorithm
+### With live data from a realsense depth camera
+  - Connect your realsense depth camera
+    ```bash
+    python gs_icp_slam_live.py
+    ```
 
-## 7. Create your own custom dataset and config
-- Your custom dataset should have the following structure:
-```bash
-custom_dataset/
-├── rgb/
-│   ├── frame000000.jpg
-│   ├── frame000001.jpg
-│   └── ...
-├── depth/
-│   ├── depth000000.png
-│   ├── depth000001.png
-│   └── ...
-```
+### Or create your own custom dataset and config
+  - Your custom dataset should have the following structure:
+    ```bash
+    custom_dataset/
+    ├── rgb/
+    │   ├── frame000000.jpg
+    │   ├── frame000001.jpg
+    │   └── ...
+    ├── depth/
+    │   ├── depth000000.png
+    │   ├── depth000001.png
+    │   └── ...
+    ```
 
-- Don't forget to add your config inside `GS_ICP_SLAM/configs/custom/your_caminfo.txt`, which should look similar to this:
-``` bash
-## camera parameters
-H W fx fy cx cy depth_scale depth_trunc dataset_type
-1200 680 600.0 600.0 599.5 339.5 6553.5 12.0 custom
-```
+  - Don't forget to add your config inside `GS_ICP_SLAM/configs/custom/your_caminfo.txt`, which should look similar to this:
+    ``` bash
+    ## camera parameters
+    H W fx fy cx cy depth_scale depth_trunc dataset_type
+    0000 0000 0000 0000 0000 0000 0000 0000 custom
+    ```
+  
+  - Take a look at our scripts for getting images and calibration data:
+    - [image_grabber.py](scripts/image_grabber.py)
+    - [camera_calibration.py](scripts/camera_calibration.py)
 
-## 8. Run gs_icp_slam.py
-```bash
-cd /home/GS_ICP_SLAM
-python -W ignore -W gs_icp_slam.py --dataset_path /path/to/your/dataset --config /path/to/your/config/caminfo.txt --rerun_viewer
-```
+  - Run it:
+    ```bash
+    cd /home/GS_ICP_SLAM
+    python -W ignore gs_icp_slam.py --dataset_path /path/to/your/dataset --config /path/to/your/config/caminfo.txt --rerun_viewer
+    ```
 
 
-## troubleshooting
+## Troubleshooting
 [rerun docker issue](https://github.com/rerun-io/rerun/issues/6835)
 
 [Nvidia Developer Forum](https://forums.developer.nvidia.com/t/new-computer-install-gpu-docker-error/266084/6)
+
+Feel free to reach out! :)
