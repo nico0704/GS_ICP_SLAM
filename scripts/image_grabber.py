@@ -12,11 +12,13 @@ import pyrealsense2 as rs
 from datetime import datetime
 import time
 
-output_dir = "dataset/custom_{}".format(datetime.now().strftime("%d%m%Y_%H_%M"))
+output_dir = "../dataset/custom_{}".format(datetime.now().strftime("%d%m%Y_%H_%M"))
 
 os.makedirs(output_dir, exist_ok=True)
 os.makedirs(f"{output_dir}/rgb", exist_ok=True)
 os.makedirs(f"{output_dir}/depth", exist_ok=True)
+
+time.sleep(20)
 
 pipeline = rs.pipeline()
 config = rs.config()

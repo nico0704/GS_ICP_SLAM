@@ -7,7 +7,7 @@ import os
 import pyrealsense2 as rs
 from datetime import datetime
 
-output_dir = "configs/custom_{}".format(datetime.now().strftime("%d%m%Y_%H_%M"))
+output_dir = "../configs/custom_{}".format(datetime.now().strftime("%d%m%Y_%H_%M"))
 os.makedirs(output_dir, exist_ok=True)
 
 pipeline = rs.pipeline()
@@ -29,11 +29,11 @@ fx = intrinsics.fx
 fy = intrinsics.fy
 cx = intrinsics.ppx
 cy = intrinsics.ppy
-depth_trunc = 3.0
-depth_scale = 65.365
+depth_trunc = 3.0 # hardcoded... change if necessary
+depth_scale = 65.365 # hardcoded... change if necessary
 print(f"Width: {W}, Height: {H}, fx: {fx}, fy: {fy}, cx: {cx}, cy: {cy}, Depth Scale: {depth_scale}, Depth Trunc: {depth_trunc}")
 
-## write calibration file ##
+# write calibration file
 log_file_path = os.path.join(output_dir, 'caminfo.txt')
 with open(log_file_path, 'w') as log_file:
     log_file.write("## camera parameters\n")
