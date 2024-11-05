@@ -76,7 +76,6 @@ class GS_ICP_SLAM(SLAMParameters):
 
         # Get size of final poses
         if self.camera_parameters[8] == "custom":
-            # ground truth poses do not exist in custom dataset
             num_final_poses = len(self.trajmanager.poses)
         else:
             num_final_poses = len(self.trajmanager.gt_poses)
@@ -151,7 +150,7 @@ class GS_ICP_SLAM(SLAMParameters):
             depth_file = os.listdir(depth_folder)[0]
             rgb_image = cv2.imread(os.path.join(rgb_folder, rgb_file))
             depth_image = np.array(o3d.io.read_image(os.path.join(depth_folder, depth_file))).astype(np.float32)
-        elif self.trajmanager.which_dataset == "custom":
+        elif self.camera_parameters[8] == "custom":
             rgb_folder = os.path.join(self.dataset_path, 'rgb')
             depth_folder = os.path.join(self.dataset_path, 'depth')
             rgb_file = os.listdir(rgb_folder)[0]
@@ -235,7 +234,7 @@ class GS_ICP_SLAM(SLAMParameters):
             depth_folder = os.path.join(self.dataset_path, "depth")
             image_files = os.listdir(rgb_folder)
             depth_files = os.listdir(depth_folder)
-        elif self.trajmanager.which_dataset == "custom":
+        elif self.camera_parameters[8] == "custom":
             rgb_folder = os.path.join(self.dataset_path, 'rgb')
             depth_folder = os.path.join(self.dataset_path, 'depth')
             image_files = sorted(os.listdir(rgb_folder))
