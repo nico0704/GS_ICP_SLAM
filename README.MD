@@ -5,13 +5,13 @@
 **This is a modified fork of the original RGBD GS-ICP SLAM repository.**  
 While keeping the foundation provided by Seongbo Ha, Jiung Yeon, and Hyeonwoo Yu, we have made some modifications to expand its functionality and support new use cases. This version includes support for custom datasets, Docker improvements, Unity visualization tools, and live data streaming capabilities. Below, you’ll find details about our contributions, followed by the original README from the authors.
 
-Thanks to @[Johanna Rompf](https://github.com/jojo892), @[Tim Liehr](https://github.com/BrI4n99) @[Leon Kratz](https://github.com/leon-kratz), @[Alexander Jost](https://github.com/Abraxius)
+Thanks to @[Johanna Rompf](https://github.com/jojo892), @[Tim Liehr](https://github.com/BrI4n99) @[Leon Kratz](https://github.com/leon-kratz), @[Alexander Jost](https://github.com/Abraxius), @[Nico Schroeder](https://github.com/nico0704)
 
 </div>
 
 ---
 
-## Contributions
+## Our Contributions
 
 ### 1. Custom Data Compatibility
 We extended the algorithm to support custom datasets, allowing it to work effectively with data sources that lack ground-truth poses. This involved updates across core files, that might be added to the original repo soon [PR #47](https://github.com/Lab-of-AI-and-Robotics/GS_ICP_SLAM/pull/47).
@@ -20,11 +20,13 @@ We extended the algorithm to support custom datasets, allowing it to work effect
 ### 2. Unity Visualization Tools
 A [setup guide](3D_Visualization/unity_setup_guide.md) and [converter](3D_Visualization/ply_converter.py) were added to enable Unity-based visualization of the GS-ICP-SLAM results. Additionally example visualizations of TUM, Replica and our custom data were uploaded ([visualizations](3D_Visualization/visus.md)).
 
+
 ### 3. Live Camera Streaming
 To enable real-time testing, we incorporated live camera support, allowing data to be streamed and processed live by the algorithm. This makes it possible to observe performance in a live setting. See the following files:
-  - [gs_icp_slam_live.py](gs_icp_slam_live.py)
-  - [mp_Tracker_live.py](mp_Tracker_live.py)
-  - [camera.py](camera.py)
+  - [camera.py](camera.py): Class that controls an Intel RealSense camera (D400-series) to capture color and depth images.
+  - [gs_icp_slam_live.py](gs_icp_slam_live.py): Running the algorithm with live captured data.
+  - [mp_Tracker_live.py](mp_Tracker_live.py): Adjustments for working with the live data.
+
 
 ### 4. Docker Enhancements
 We revamped Docker support to simplify environment setup and execution:
@@ -35,11 +37,11 @@ We revamped Docker support to simplify environment setup and execution:
 
 ---
 
-### Some visualizations of our custom data with rerun viewer:
+### Some visualizations of our custom data:
 
 <img src="3D_Visualization/rerun/gang.gif" width="640" height="480" /><br><br>
 
-Feel free to reach out! :)
+Feel free to reach out!
 
 Below is the original README from the authors of RGBD GS-ICP SLAM:
 
