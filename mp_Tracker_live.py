@@ -1,7 +1,3 @@
-# This code performs the tracking part of the gs_icp_slam algorithm for live data stream.
-# It initializes a camera which handles capturing of the depth and rgb images + retrieving calibration parameters.
-# The main loop stops after max_images (default 2000) have been taken.
-
 import os
 import torch
 import torch.multiprocessing as mp

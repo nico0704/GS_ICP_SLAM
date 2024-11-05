@@ -23,7 +23,7 @@ class TrajManager:
             self.gt_poses = self.replica_load_poses(self.dataset_path + '/traj.txt')
             self.gt_poses_vis = np.array([x[:3, 3] for x in self.gt_poses])
         elif self.which_dataset == "custom":
-            self.poses = self.custom_load_poses()
+            self.poses = self.load_default_pose()
         else:
             print("Unknown dataset!")
             sys.exit()
@@ -62,8 +62,9 @@ class TrajManager:
         pose[:3, 3] = pvec[:3]
         return pose
     
-    def custom_load_poses(self):
+    def load_default_pose(self):
         poses = []
+        # harcoded default position
         pvec = [1, 1, 1, 1, 1, 1, 1]
         c2w = self.pose_matrix_from_quaternion(pvec=pvec)
         poses += [c2w]

@@ -1,10 +1,3 @@
-# This code runs the gs_icp_slam algorithm with a stream of live data from a depth camera.
-# Following args can be specified for the live stream version:
-    # save_images: A flag that determines whether or not to save the captured images.
-    # save_dir: Specifies the directory where the images will be saved.
-    # stop_after: Sets the maximum number of images to capture and process (default is 2000).
-    # fps: Defines the frame rate (frames per second) for capturing images (default is 30 fps).
-
 import os
 import torch
 import torch.multiprocessing as mp
@@ -85,7 +78,10 @@ class GS_ICP_SLAM(SLAMParameters):
         test_rgb_img, test_depth_img = self.camera.get_images()
         test_points, _, _, _ = self.downsample_and_make_pointcloud(test_depth_img, test_rgb_img)
         
-        print("Stoping test camera.")
+        # Removing camera because using multiple instances of the same pyrealsense camera 
+        # across multiple processes is not possible
+        # might lead to unwanted side effects
+        print("Closing test camera.")
         self.camera.stop()
         self.camera = None
 
@@ -210,15 +206,15 @@ class GS_ICP_SLAM(SLAMParameters):
 
 if __name__ == "__main__":
     parser = ArgumentParser()
-    parser.add_argument("--dataset_path", help="dataset path to store the images", default=None)
-    parser.add_argument("--config", help="caminfo", default="configs/Replica/caminfo.txt")
-    parser.add_argument("--output_path", help="output path", default="output/new_calib_test")
+    parser.add_argument("--dataset_path", help="dataset path", default="dataset/custom_{}".format(datetime.now().strftime("%d%m%Y_%H_%M")))
+    parser.add_argument("--config", help="caminfo", default=None)
+    parser.add_argument("--output_path", help="output path", default="output/output_1")
     parser.add_argument("--keyframe_th", default=0.7)
     parser.add_argument("--knn_maxd", default=99999.0)
     parser.add_argument("--verbose", action='store_true', default=False)
     parser.add_argument("--demo", action='store_true', default=False)
     parser.add_argument("--overlapped_th", default=5e-4)
-    parser.add_argument("--max_correspondence_distance", default=0.02)
+    parser.add_argument("--max_correspondence_distance", default=0.1)
     parser.add_argument("--trackable_opacity_th", default=0.05)
     parser.add_argument("--overlapped_th2", default=5e-5)
     parser.add_argument("--downsample_rate", default=10)
@@ -226,9 +222,7 @@ if __name__ == "__main__":
     parser.add_argument("--save_results", action='store_true', default=None)
     parser.add_argument("--rerun_viewer", action="store_true", default=False)
     parser.add_argument("--save_images", action='store_true', default=None)
-    parser.add_argument("--save_dir", help="directory to save the taken images", default="dataset/custom_{}".format(datetime.now().strftime("%d%m%Y_%H_%M")))
-    parser.add_argument("--stop_after", default=2000)
-    parser.add_argument("--fps", default=30)
+    parser.add_argument("--stop_after", default=1000)
     
     args = parser.parse_args()
 
