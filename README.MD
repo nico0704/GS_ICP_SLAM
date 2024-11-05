@@ -1,5 +1,51 @@
 <div align=center>
 
+# RGBD GS-ICP SLAM - Fork
+
+**This is a modified fork of the original RGBD GS-ICP SLAM repository.**  
+While keeping the foundation provided by Seongbo Ha, Jiung Yeon, and Hyeonwoo Yu, we have made some modifications to expand its functionality and support new use cases. This version includes support for custom datasets, Docker improvements, Unity visualization tools, and live data streaming capabilities. Below, you’ll find details about our contributions, followed by the original README from the authors.
+
+Thanks to @[Johanna Rompf](https://github.com/jojo892), @[Tim Liehr](https://github.com/BrI4n99) @[Leon Kratz](https://github.com/leon-kratz), @[Alexander Jost](https://github.com/Abraxius)
+
+</div>
+
+---
+
+## Contributions
+
+### 1. Custom Data Compatibility
+We extended the algorithm to support custom datasets, allowing it to work effectively with data sources that lack ground-truth poses. This involved updates across core files, that might be added to the original repo soon [PR #47](https://github.com/Lab-of-AI-and-Robotics/GS_ICP_SLAM/pull/47).
+
+
+### 2. Unity Visualization Tools
+A [setup guide](3D_Visualization/unity_setup_guide.md) and [converter](3D_Visualization/ply_converter.py) were added to enable Unity-based visualization of the GS-ICP-SLAM results. Additionally example visualizations of TUM, Replica and our custom data were uploaded ([visualizations](3D_Visualization/visus.md)).
+
+### 3. Live Camera Streaming
+To enable real-time testing, we incorporated live camera support, allowing data to be streamed and processed live by the algorithm. This makes it possible to observe performance in a live setting. See the following files:
+  - [gs_icp_slam_live.py](gs_icp_slam_live.py)
+  - [mp_Tracker_live.py](mp_Tracker_live.py)
+  - [camera.py](camera.py)
+
+### 4. Docker Enhancements
+We revamped Docker support to simplify environment setup and execution:
+   - **Dockerfile Adjustments**: Improved the [Dockerfile](docker_folder/Dockerfile) to make build process work.
+   - **Run Script**: Added [run.sh](docker_folder/run.sh) to facilitate running the algorithm and rerun viewer inside the container.
+   - **Submodule Setup Script**: Included a shell script to handle submodule installation [install_submodules.sh](docker_folder/install_submodules.sh).
+   - **Docker Documentation**: Created an in-depth [README.md](docker_folder/README.md) within the [docker_folder](docker_folder), detailing setup and execution steps for running the algorithm with custom data and Docker.
+
+---
+
+### Some visualizations of our custom data with rerun viewer:
+
+<img src="3D_Visualization/rerun/gang.gif" width="640" height="480" /><br><br>
+
+Feel free to reach out! :)
+
+Below is the original README from the authors of RGBD GS-ICP SLAM:
+
+
+<div align=center>
+
 # RGBD GS-ICP SLAM
 
 Seongbo Ha, Jiung Yeon, Hyeonwoo Yu

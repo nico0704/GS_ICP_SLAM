@@ -70,8 +70,11 @@ docker exec -it gs_icp_slam_container bash
 
 
 ## Troubleshooting
+We got the best looking results by playing around with the default parameters. Especially changing the `max_correspondence_distance` to 0.1 improved the results for our custom data a lot.
+
 [rerun docker issue](https://github.com/rerun-io/rerun/issues/6835)
 
 [Nvidia Developer Forum](https://forums.developer.nvidia.com/t/new-computer-install-gpu-docker-error/266084/6)
+
 
 Feel free to reach out! :)
